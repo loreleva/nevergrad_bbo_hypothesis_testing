@@ -52,14 +52,9 @@ class CustomProcess(Process):
 				self.var_res.value = res
 			self.barrier_computed.wait()
 
-def stop_condition(results, num_values):
-	if len(results) < num_values:
-		return 0
-	if entropy(results[-20:]) > math.log2(20) - 0.1:
-		return 1
-	return 0
+def hypothesis_testing(delta, epsilon, num_points, num_proc, dim):
+	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
 
-def run_nevergrad_parallel(num_points, num_proc, dim):
 	# init nevergrad optimizer
 	optimizer = ng.optimizers.NGOpt(parametrization=dim, budget=10**6)
 
@@ -69,7 +64,7 @@ def run_nevergrad_parallel(num_points, num_proc, dim):
 	
 	
 	# list of shared values of the evaluation of the function, list of dimension num_points
-	arr_res = [Value("d", 0) for x in range(num_points)]
+	arr_res = [Value("d", 0) for x in range(num_proc)]
 	# shared variable for the stopping condition
 	stop_search = Value("i", 0)
 	#
@@ -87,83 +82,71 @@ def run_nevergrad_parallel(num_points, num_proc, dim):
 	for proc in processes:
 		proc.start()
 
-	results = []
+	S_prime = math.inf
+	S_values = []
 	while (not stop_search.value):
-		# list which contains num_points array of function inputs
-		computed_points = []
-		input_points = []
-		for i in range(num_points):
-			query = optimizer.ask()
-			query = list(*query.args)
-			input_points.append(query)
+		for run in range(N):
+			S = S_prime
+			# list which contains num_points array of function inputs
+			computed_points = []
+			input_points = []
+			for i in range(num_points):
+				query = optimizer.ask()
+				query = list(*query.args)
+				input_points.append(query)
 
-		# execute num_proc evaluations, for num_points // num_proc times
-		for idx in range(0, num_points - (num_points % num_proc), num_proc):
-			for idx_proc in range(num_proc):
-				for idx_input in range(dim):
-					arr_inp[idx_proc][idx_input] = input_points[idx+idx_proc][idx_input]
-			barrier_compute.wait()
-			while(barrier_computed.n_waiting != num_proc):
-				pass
-			for idx_proc in range(num_proc):
-				computed_points.append(arr_res[idx_proc].value)
-			barrier_computed.wait()
+			# execute num_proc evaluations, for num_points // num_proc times
+			for idx in range(0, num_points - (num_points % num_proc), num_proc):
+				for idx_proc in range(num_proc):
+					for idx_input in range(dim):
+						arr_inp[idx_proc][idx_input] = input_points[idx+idx_proc][idx_input]
+				barrier_compute.wait()
+				while(barrier_computed.n_waiting != num_proc):
+					pass
+				for idx_proc in range(num_proc):
+					computed_points.append(arr_res[idx_proc].value)
+				barrier_computed.wait()
 
-		# compute rest of the points
-		if (num_points % num_proc != 0):
-			# execute the remaning num of workers
-			for idx in range(num_points - (num_points % num_proc), num_points):
-				for idx_input in range(dim):
-					arr_inp[num_points-idx-1][idx_input] = input_points[idx][idx_input]
+			# compute rest of the points
+			if (num_points % num_proc != 0):
+				# execute the remaning num of workers
+				for idx in range(num_points - (num_points % num_proc), num_points):
+					for idx_input in range(dim):
+						arr_inp[num_points-idx-1][idx_input] = input_points[idx][idx_input]
 			
-			# do not assign computation to the remaining processes
-			for idx in range((num_points % num_proc), num_proc):
-				compute[idx].value = 0
+				# do not assign computation to the remaining processes
+				for idx in range((num_points % num_proc), num_proc):
+					compute[idx].value = 0
 
-			# perform computation
-			barrier_compute.wait()
-			while(barrier_computed.n_waiting != num_proc):
-				pass
-			for idx in range(num_points - (num_points % num_proc), num_points):
-				computed_points.append(arr_res[num_points-idx-1].value)
-			barrier_computed.wait()
+				# perform computation
+				barrier_compute.wait()
+				while(barrier_computed.n_waiting != num_proc):
+					pass
+				for idx in range(num_points - (num_points % num_proc), num_points):
+					computed_points.append(arr_res[num_points-idx-1].value)
+				barrier_computed.wait()
 
-			for x in range((num_points % num_proc), num_proc):
-				compute[x].value = 1
+				for x in range((num_points % num_proc), num_proc):
+					compute[x].value = 1
 
-		for i in range(num_points):
-			candidate = optimizer.parametrization.spawn_child(new_value = input_points[i])
-			optimizer.tell(candidate, computed_points[i])
+			for i in range(num_points):
+				candidate = optimizer.parametrization.spawn_child(new_value = input_points[i])
+				optimizer.tell(candidate, computed_points[i])
 
-		# append to the results list the minimum point found
-		results.append(min(computed_points))
-
-		if stop_condition(results, 20):
+			result = min(computed_points)
+			print(f"Run: {run+1}/{N}\tResult: {result}\tS: {S}")
+			if result < S:
+				S_prime = result
+				S_values.append(S_prime)
+				break
+		if S == S_prime:
 			stop_search.value = 1
-			barrier_compute.wait()
-		if len(results) >= 20:
-			print(results[-20:])
-	
+
+	barrier_compute.wait()
 	for proc in processes:
 		proc.join()
 	recommendation = optimizer.provide_recommendation()
 	return (list(*recommendation.args), evaluate_parallel(list(*recommendation.args), [False]))
-
-def hypothesis_testing(delta, epsilon, num_points, num_proc, dim):
-	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
-	print(f"N: {N}")
-	S = run_nevergrad_parallel(num_points, num_proc, dim)[1]
-	while (1):
-		results = []
-		for x in range(N):
-			results.append(run_nevergrad_parallel(num_points, num_proc, dim)[1])
-		S_prime = min(results)
-		if S_prime < S:
-			S = S_prime
-		else:
-			break
-		print(f"S_prime: {S_prime}\tS: {S}")
-	return S
 
 def main(argv):
 	# argv[0] : function name, argv[1] : dimension, argv[2] : # points to evaluate, argv[3] : # parallel processes
