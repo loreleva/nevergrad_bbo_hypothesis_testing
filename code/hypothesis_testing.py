@@ -125,36 +125,48 @@ def hypothesis_testing(delta, epsilon, num_points, num_proc, dim, lower_bound = 
 				for idx in range((num_points % num_proc), num_proc):
 					compute[idx].value = 0
 
-				# perform computation
+				# start computations
 				barrier_compute.wait()
+				# wait until all computations are terminated
 				while(barrier_computed.n_waiting != num_proc):
 					pass
+				# retrieve results
 				for idx in range(num_points - (num_points % num_proc), num_points):
 					computed_points.append(arr_res[num_points-idx-1].value)
 				barrier_computed.wait()
 
+				# reset compute variables to 1
 				for x in range((num_points % num_proc), num_proc):
 					compute[x].value = 1
 
+			# tell results to optimizer
 			for i in range(num_points):
 				candidate = optimizer.parametrization.spawn_child(new_value = input_points[i])
 				optimizer.tell(candidate, computed_points[i])
 
+			# take the minimum of the num_points evaluations
 			result = min(computed_points)
 			print(f"Run: {run+1}/{N}\tResult: {result}\tS: {S}")
 			string_run = string_run + f"Run: {run+1}/{N}\tResult: {result}\tS: {S}\n"
+
+			# if result smaller than starting S, restart
 			if result < S:
 				S_prime = result
 				S_values.append(S_prime)
 				break
+		# if after the loop starting S is equal to S_prime, end algorithm
 		if S == S_prime:
 			stop_search.value = 1
+		# write temp results 
 		with open(f"{os.path.dirname(__file__)}/temp_res/temp.txt", "w") as f:
 			f.write(string_run)
 			f.close()
+	# free processes to finish them
 	barrier_compute.wait()
 	for proc in processes:
 		proc.join()
+
+	# obtain best value found 
 	recommendation = optimizer.provide_recommendation()
 	print(f"Num iterations: {num_iterations}")
 	return (list(*recommendation.args), evaluate_parallel(list(*recommendation.args), [False]))
