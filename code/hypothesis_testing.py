@@ -52,11 +52,15 @@ class CustomProcess(Process):
 				self.var_res.value = res
 			self.barrier_computed.wait()
 
-def hypothesis_testing(delta, epsilon, num_points, num_proc, dim):
+def hypothesis_testing(delta, epsilon, num_points, num_proc, dim, lower_bound = None, upper_bound = None):
 	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
+	if lower_bound != None and upper_bound != None:
+		param = ng.p.Array(shape=(dim,), lower=lower_bound, upper=upper_bound)
+	else:
+		param = ng.p.Array(shape=(dim,))
 
 	# init nevergrad optimizer
-	optimizer = ng.optimizers.NGOpt(parametrization=dim, budget=10**6)
+	optimizer = ng.optimizers.NGOpt(parametrization=param, budget=10**6)
 
 	# init of the multiprocessing
 	# arr_inp is a list which contains num_proc n-dimensional arrays, each shared array will contain the function input which the process must compute
@@ -164,8 +168,15 @@ def main(argv):
 	init_function(function_name)
 	dim = int(argv[1])
 	min_f = minimum_f(dim)
+	
+	range_f = ev.input_domain(dim)
+	bounds = [[],[]]
+	for x in range(dim):
+		bounds[0].append(range_f[x][0])
+		bounds[1].append(range_f[x][1])
 	print(f"minimum_f: {min_f}")
-	print(f"RESULT: {hypothesis_testing(0.001, 0.001, int(argv[2]), int(argv[3]), dim)}")
+	print(f"Lower bounds: {bounds[0]}\tUpper bounds: {bounds[1]}")
+	print(f"RESULT: {hypothesis_testing(0.001, 0.001, int(argv[2]), int(argv[3]), dim, bounds[0], bounds[1])}")
 	print(f"Time: {time.time() - start_time}")
 
 

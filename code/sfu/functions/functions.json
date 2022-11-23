@@ -4,9 +4,11 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": "double a (default = 20)\ndouble b (default = 0.2)\ndouble c (default = 2*\\pi",
-        "input_domain": [ 
+        "input_domain": [
+            [ 
             -32.768,
             32.768
+            ]
         ],
         "filepath_r": "functions_parameters/ackley_function.R",
         "filepath_m": "functions_parameters/ackley_function.m"
