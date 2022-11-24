@@ -49,7 +49,7 @@ def entropy(samples):
 	return - sum([x * math.log2(x) for x in prob_samples])
 
 def stopping_criteria(samples):
-	if entropy(samples) > math.log2(len(samples)) - 0.01:
+	if entropy(samples) > math.log2(len(samples)) - 1e-10:
 		return True
 	return False
 
