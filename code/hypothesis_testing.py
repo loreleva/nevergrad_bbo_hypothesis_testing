@@ -26,24 +26,26 @@ def fun_opt(inp):
 	return sum([x**2 for x in inp])
 
 def proc_function(q_inp, q_res):
-	# inp = (index input, input)
 	inp = q_inp.get()
 	while (inp != None):
-		res = ev.evaluate(inp[1])
-		q_res.put((inp[1], res))
+		res = run_nevergrad()
+		q_res.put(res)
 		inp = q_inp.get()
 
 def init_processes():
 	global num_proc, q_inp, q_res
 	q_inp = Queue()
 	q_res = Queue()
+	processes = []
 	for x in range(num_proc):
-		Process(target=proc_function, args=(q_inp, q_res,)).start()
+		processes.append(Process(target=proc_function, args=(q_inp, q_res,)))
+		processes[x].start()
+	return processes
 
-def kill_processes():
+def kill_processes(processes):
 	global num_proc, q_inp
-	for x in range(num_proc):
-		q_inp.put(None)
+	for x in processes:
+		x.kill()
 
 
 def entropy(samples):
@@ -72,12 +74,9 @@ def update_optimizer(optimizer, input_points, computed_points):
 		optimizer.tell(candidate, computed_points[i])
 
 def compute_points(input_points):
-	global num_points, q_inp, q_res
 	results = []
-	for x in range(num_points):
-		q_inp.put((x, input_points[x]))
-	for x in range(num_points):
-		results.append(q_res.get())
+	for inp in input_points:
+		results.append(ev.evaluate(inp))
 	return results
 
 def run_nevergrad():
@@ -95,16 +94,16 @@ def run_nevergrad():
 	for x in range(range_stopping_criteria):
 		input_points = obtain_queries(optimizer)
 		computed_points = compute_points(input_points)
-		input_points, computed_points = list(zip(*computed_points))
 		results.append(min(computed_points))
+		#print(f"RESULT : {results}")
 		update_optimizer(optimizer, input_points, computed_points)
 
 	while (not stopping_criteria(results)):
 		input_points = obtain_queries(optimizer)
 		computed_points = compute_points(input_points)
-		input_points, computed_points = list(zip(*computed_points))
 		results.append(min(computed_points))
 		results = results[1:]
+		#print(f"RESULT : {results}")
 		update_optimizer(optimizer, input_points, computed_points)
 	recommendation = optimizer.provide_recommendation()
 	return (list(*recommendation.args), ev.evaluate(list(*recommendation.args)))
@@ -118,38 +117,33 @@ def write_log_file(path, string_res):
 
 
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
-
+	global q_inp, q_res
 	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
 	print(f"N: {N}")
 	start_exec_time = time.time()
 
 	# init S
 	path = "/temp_res/temp.txt"
-	write_string = f"Init S with first run of nevergrad"
-	print(write_string)
-	write_log_file(path, write_string)
-	res = run_nevergrad()
-	temp_string = f"First result nevergrad:\n{res}\nTime: {time.time()-start_exec_time}"
-	write_string = write_string + "\n" + temp_string + "\n"
-	print(temp_string)
-	write_log_file(path, write_string)
+	q_inp.put(1)
+	res = q_res.get()
 	S_values = [res]
 	S = res[1]
 	num_iterations = 0
+	write_string = ""
 	while (1):
 		num_iterations += 1
-		for run in range(N):
-			temp_string = f"Start Run: {run+1}/{N}"
-			write_string = write_string + "\n" + temp_string
-			print(temp_string)
-			write_log_file(path, write_string)
-			start_exec_time = time.time()
-			res = run_nevergrad()
-			temp_string = f"Run: {run+1}/{N}\tResult: {res[1]}\tS: {S}\nTime: {time.time()-start_exec_time}"
-			write_string = write_string + "\n" + temp_string + "\n"
-			print(temp_string)
-			write_log_file(path, write_string)
+		for x in range(N):
+			q_inp.put(1)
 
+		counter_samples = 0
+		while(counter_samples < N):
+			counter_samples += 1
+			start_time = time.time()
+			res = q_res.get()
+			temp_string = f"RESULT: {res}\tS: {S}\tITERATION: {counter_samples}/{N}\tTIME: {time.time() - start_time}"
+			print(temp_string)
+			write_string = write_string + '\n' + temp_string
+			write_log_file(path, write_string)
 			# if result smaller than starting S, restart
 			if (res[1] + tolerance) < S:
 				S_prime = res[1]
@@ -190,12 +184,12 @@ def main(argv):
 	range_stopping_criteria = 20
 
 	num_proc = int(argv[3])
-	init_processes()
+	processes = init_processes()
 
 	print(f"minimum_f: {min_f}")
 	print(f"Lower bounds: {bounds[0]}\tUpper bounds: {bounds[1]}")
 	print(f"RESULT hypothesis testing: {hypothesis_testing(0.001, 0.001)}")
-	kill_processes()
+	kill_processes(processes)
 	print(f"Time: {time.time() - start_time}")
 
 
