@@ -22,9 +22,6 @@ def init_function(function):
 def minimum_f(dim=None):
 	return ev.minimum_value(dim)
 
-def fun_opt(inp):
-	return sum([x**2 for x in inp])
-
 def proc_function(q_inp, q_res):
 	inp = q_inp.get()
 	while (inp != None):
@@ -127,12 +124,15 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	q_inp.put(1)
 	res = q_res.get()
 	S_values = [res]
-	S = res[1]
+	S_prime = res[1]
 	num_iterations = 0
 	write_string = ""
 	while (1):
+		S = S_prime
 		num_iterations += 1
-		for x in range(N):
+		
+		q_sizes = q_inp.qsize() + q_res.qsize()
+		for x in range(N - q_sizes):
 			q_inp.put(1)
 
 		counter_samples = 0
@@ -140,7 +140,7 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 			counter_samples += 1
 			start_time = time.time()
 			res = q_res.get()
-			temp_string = f"RESULT: {res}\tS: {S}\tITERATION: {counter_samples}/{N}\tTIME: {time.time() - start_time}"
+			temp_string = f"RESULT: {res[1]}\tS: {S}\tITERATION: {counter_samples}/{N}\tTIME: {time.time() - start_time}"
 			print(temp_string)
 			write_string = write_string + '\n' + temp_string
 			write_log_file(path, write_string)
