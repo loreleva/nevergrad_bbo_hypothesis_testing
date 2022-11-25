@@ -22,11 +22,14 @@ def init_function(function):
 def minimum_f(dim=None):
 	return ev.minimum_value(dim)
 
+def fun_opt(inp):
+	return sum([x**2 for x in inp])
+
 def proc_function(q_inp, q_res):
 	# inp = (index input, input)
 	inp = q_inp.get()
 	while (inp != None):
-		res = ev.evaluate(inp[1], multi_proc=[True, inp[0]])
+		res = ev.evaluate(inp[1])
 		q_res.put((inp[1], res))
 		inp = q_inp.get()
 
@@ -97,7 +100,6 @@ def run_nevergrad():
 		update_optimizer(optimizer, input_points, computed_points)
 
 	while (not stopping_criteria(results)):
-		print(f"RESULTSS: {results}")
 		input_points = obtain_queries(optimizer)
 		computed_points = compute_points(input_points)
 		input_points, computed_points = list(zip(*computed_points))
@@ -105,45 +107,65 @@ def run_nevergrad():
 		results = results[1:]
 		update_optimizer(optimizer, input_points, computed_points)
 	recommendation = optimizer.provide_recommendation()
-	return (list(*recommendation.args), ev.evaluate(list(*recommendation.args), multi_proc=[False]))
+	return (list(*recommendation.args), ev.evaluate(list(*recommendation.args)))
 
+
+def write_log_file(path, string_res):
+	# write temp results
+	with open(f"{os.path.dirname(__file__)}" + path, "w") as f:
+		f.write(string_res)
+		f.close()
 
 
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 
 	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
+	print(f"N: {N}")
+	start_exec_time = time.time()
 
 	# init S
+	path = "/temp_res/temp.txt"
+	write_string = f"Init S with first run of nevergrad"
+	print(write_string)
+	write_log_file(path, write_string)
 	res = run_nevergrad()
-
+	temp_string = f"First result nevergrad:\n{res}\nTime: {time.time()-start_exec_time}"
+	write_string = write_string + "\n" + temp_string + "\n"
+	print(temp_string)
+	write_log_file(path, write_string)
 	S_values = [res]
 	S = res[1]
 	num_iterations = 0
 	while (1):
 		num_iterations += 1
-		string_run = ''
 		for run in range(N):
-
+			temp_string = f"Start Run: {run+1}/{N}"
+			write_string = write_string + "\n" + temp_string
+			print(temp_string)
+			write_log_file(path, write_string)
+			start_exec_time = time.time()
 			res = run_nevergrad()
-			print(f"Run: {run+1}/{N}\tResult: {res[1]}\tS: {S}")
-			string_run = string_run + f"Run: {run+1}/{N}\tResult: {res[1]}\tS: {S}\n"
+			temp_string = f"Run: {run+1}/{N}\tResult: {res[1]}\tS: {S}\nTime: {time.time()-start_exec_time}"
+			write_string = write_string + "\n" + temp_string + "\n"
+			print(temp_string)
+			write_log_file(path, write_string)
 
 			# if result smaller than starting S, restart
 			if (res[1] + tolerance) < S:
 				S_prime = res[1]
 				S_values.append(res)
+				write_string = ""
 				break
 
 		# if after the loop starting S is equal to S_prime, end algorithm
 		if S == S_prime:
 			break
-		# write temp results 
-		with open(f"{os.path.dirname(__file__)}/temp_res/temp.txt", "w") as f:
-			f.write(string_run)
-			f.close()
+		
 
-	print(f"Num iterations: {num_iterations}")
-	print(f"S values: {S_values}")
+	temp_string = f"Num iterations: {num_iterations}\nS values: {S_values}"
+	write_string = write_string + "\n" + temp_string
+	print(temp_string)
+	write_log_file(path, write_string)
 	return S_values[-1]
 
 def main(argv):

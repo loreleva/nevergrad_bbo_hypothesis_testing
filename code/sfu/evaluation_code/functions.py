@@ -1,4 +1,5 @@
 import json, math, os
+from rpy2 import robjects
 from subprocess import check_output
 import shutil
 
@@ -6,6 +7,8 @@ json_functions = None
 function_name = None
 function_informations = None
 path_implementation = None
+R_code = None
+function_impl_name = None
 
 class JsonNotLoaded(Exception):
 	pass
@@ -27,10 +30,15 @@ def select_function(name):
 	if not name in json_functions.keys():
 		raise sfuFunctionError("The function selected does not exists")
 	
-	global function_name, function_informations, path_implementation
+	global function_name, function_informations, path_implementation, R_code, function_impl_name
 	function_name = name
 	function_informations = json_functions[name]
 	path_implementation = os.path.join(os.path.dirname(os.path.dirname(__file__)), "functions/") + json_functions[name]["filepath_r"]
+	with open(path_implementation, 'r') as f:
+		R_code = f.read()
+		function_impl_name = R_code.split('\n')[0].split()[0]
+		f.close()
+	
 
 def search_function(filters=None):
 	global json_functions
@@ -167,9 +175,8 @@ def input_domain(dim=None):
 	return result
 
 
-def evaluate(inp, param=None, multi_proc=[False]):
-	# evaluate the function implementation in R
-	global function_name, path_implementation
+def evaluate(inp, param=None):
+	global function_name, R_code
 	function_dimension = dimension()
 	if not function_name:
 		raise sfuFunctionError("No function has been selected")
@@ -181,37 +188,14 @@ def evaluate(inp, param=None, multi_proc=[False]):
 		inp = [inp]
 	if function_dimension == "d":
 		function_dimension = len(inp)
-	if multi_proc[0]:
-		path_copy_implementation = path_implementation[:-2] + f"_eval_{multi_proc[1]}.R"
+	call = "\n" + function_impl_name
+	if function_dimension == 1:
+		call = call + "({}".format(inp[0])
 	else:
-		path_copy_implementation = path_implementation[:-2] + "_eval.R"
-	shutil.copyfile(path_implementation, path_copy_implementation)
-	with open(path_copy_implementation, "r") as f:
-		call = "\n" + f.readline().split()[0]
-		if function_dimension == 1:
-			call = call + "({}".format(inp[0])
-		else:
-			inp = [str(x) for x in inp]
-			call = call + "(c(" + ",".join(tuple(inp)) + ")"
-		if param != None:
-			for par in param:
-				call = call + ",{}={}".format(par, param[par])
-		call = call + ")"
-		f.close()
-
-
-	with open(path_copy_implementation, "a") as f:
-		f.write(call)
-
-	try:
-		cmd = ["Rscript", path_copy_implementation]
-		out = check_output(cmd)
-	except:
-		print("Error in the function execution occurred")
-		return None
-	finally:
-		f.close()
-		os.remove(path_copy_implementation)
-	if out.decode().split()[1] == "NA":
-		return None
-	return float(out.decode().split()[1])
+		inp = [str(x) for x in inp]
+		call = call + "(c(" + ",".join(tuple(inp)) + ")"
+	if param != None:
+		for par in param:
+			call = call + ",{}={}".format(par, param[par])
+	call = call + ")"
+	return robjects.r(R_code + call)[0]
