@@ -1,3 +1,4 @@
 nevergrad
 matplotlib
 rpy2
+memory_profiler
