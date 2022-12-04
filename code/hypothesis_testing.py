@@ -8,20 +8,13 @@ from memory_profiler import memory_usage
 
 num_proc = 0
 num_points = 0
-dim = 0
-parameters = None
+function_obj = None
 q_inp = None
 q_res = None
-lower_bound = None
-upper_bound = None
 range_stopping_criteria = None
 path_log_file = None
 log_string = ""
 
-def init_function(function):
-	json_path = os.path.join(os.path.dirname(__file__),"sfu/functions/functions.json")
-	ev.load_json(os.path.join(os.path.dirname(__file__),"sfu/functions/functions.json"))
-	ev.select_function(function)
 
 def minimum_f(dim=None):
 	return ev.minimum_value(dim)
@@ -47,7 +40,6 @@ def init_processes():
 	return processes
 
 def kill_processes(processes):
-	global num_proc, q_inp
 	for x in processes:
 		x.kill()
 
@@ -78,25 +70,27 @@ def update_optimizer(optimizer, input_points, computed_points):
 		optimizer.tell(candidate, computed_points[i])
 
 def compute_points(input_points):
-	global parameters
+	global parameters, function_obj
 	results = []
 	for inp in input_points:
-		results.append(ev.evaluate(inp, param=parameters))
+		results.append(function_obj.evaluate(inp))
 	return results
 
 def run_nevergrad():
-	global lower_bound, upper_bound, range_stopping_criteria, dim, log_string
-
-	if lower_bound != None and upper_bound != None:
-		param = ng.p.Array(shape=(dim,), lower=lower_bound, upper=upper_bound)
+	global range_stopping_criteria, log_string, function_obj
+	function_obj.input_lb = None
+	function_obj.input_ub = None
+	if function_obj.input_lb != None and function_obj.input_ub != None:
+		param = ng.p.Array(shape=(function_obj.dimension,), lower=function_obj.input_lb, upper=function_obj.input_ub)
 	else:
-		param = ng.p.Array(shape=(dim,))
+		param = ng.p.Array(shape=(function_obj.dimension,))
 
 	# init nevergrad optimizer
 	optimizer = ng.optimizers.NGOpt(parametrization=param, budget=10**6)
 
 	results = []
 	for x in range(range_stopping_criteria):
+		
 		input_points = obtain_queries(optimizer)
 		computed_points = compute_points(input_points)
 		results.append(min(computed_points))
@@ -111,7 +105,7 @@ def run_nevergrad():
 		#print(f"RESULT : {results}")
 		update_optimizer(optimizer, input_points, computed_points)
 	recommendation = optimizer.provide_recommendation()
-	return (optimizer.num_ask, list(*recommendation.args), ev.evaluate(list(*recommendation.args)))
+	return (optimizer.num_ask, list(*recommendation.args), function_obj.evaluate(list(*recommendation.args)))
 
 
 def write_log_file(path, string_res):
@@ -183,7 +177,7 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 
 def main(argv):
 	# argv[0] : function name, argv[1] : # points to evaluate, argv[2] : # parallel processes
-	global num_proc, num_points, dim, parameters, lower_bound, upper_bound, range_stopping_criteria, path_log_file, log_string
+	global num_proc, num_points, function_obj, range_stopping_criteria, path_log_file, log_string
 
 	processes_time = 0
 	path_dir_res = os.path.join(os.path.dirname(__file__),"log_results")
@@ -191,7 +185,7 @@ def main(argv):
 		os.mkdir(path_dir_res)
 	# init the module which compute the function and the infos about it
 	function_name = argv[0]
-	init_function(function_name)
+
 	param_a = [20, 50]
 	param_b = [0.2, 0.8]
 	param_c = [2*math.pi, 7*math.pi]
@@ -202,7 +196,6 @@ def main(argv):
 	delta = 0.001
 	epsilon = 0.001
 	for temp_dim in dimensions:
-		min_f = minimum_f(temp_dim)
 		path_dir_res_dim = os.path.join(path_dir_res, f"dim_{temp_dim}")
 		if not os.path.exists(path_dir_res_dim):
 			os.mkdir(path_dir_res_dim)
@@ -211,10 +204,12 @@ def main(argv):
 				for par_c in param_c:
 					dim = temp_dim
 					parameters = {"a" : par_a, "b" : par_b, "c" : par_c}
-					log_string = f"TESTING FUNCTION DIM: {temp_dim} PARAM_A: {par_a} PARAM_B: {par_b} PARAM_C {par_c} OPT_POINT: {min_f}\n"
+					function_obj = ev.objective_function(argv[0], dim=dim, param=parameters)
+					log_string = f"TESTING FUNCTION DIM: {temp_dim} PARAM_A: {par_a} PARAM_B: {par_b} PARAM_C {par_c} OPT_POINT: {function_obj.minimum_f}\n"
 					path_log_file = os.path.join(path_dir_res_dim, f"log_dimension-{dim}_param_a-{par_a}_param_b-{par_b}_param_c-{str(par_c).replace('.','-')}.txt")
 					print(log_string)
 					processes = init_processes()
+					
 					hypo_testing_res = hypothesis_testing(delta, epsilon)
 					temp_string = f"ERROR: {abs(min_f - hypo_testing_res[1][2])}"
 					print(temp_string + "\n\n\n")

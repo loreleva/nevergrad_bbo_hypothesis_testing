@@ -42,3 +42,6 @@ trid <- function(xx)
   y <- sum1 - sum2
   return(y)
 }
+
+
+
