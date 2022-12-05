@@ -1,6 +1,6 @@
 import nevergrad as ng
 import sfu.evaluation_code.functions as ev
-import time, sys, os, math
+import time, sys, os, math, itertools
 from multiprocessing import Process, Queue
 from memory_profiler import memory_usage
 
@@ -12,8 +12,7 @@ function_obj = None
 q_inp = None
 q_res = None
 range_stopping_criteria = None
-path_log_file = None
-log_string = ""
+path_dir_log_file = None
 
 
 def minimum_f(dim=None):
@@ -70,7 +69,7 @@ def update_optimizer(optimizer, input_points, computed_points):
 		optimizer.tell(candidate, computed_points[i])
 
 def compute_points(input_points):
-	global parameters, function_obj
+	global function_obj
 	results = []
 	for inp in input_points:
 		results.append(function_obj.evaluate(inp))
@@ -116,8 +115,8 @@ def write_log_file(path, string_res):
 
 
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
-	global q_inp, q_res, dim, parameters, log_string, num_proc
-	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
+	global q_inp, q_res, path_dir_log_file, num_proc, function_obj
+	N = 10#math.ceil((math.log(delta)/math.log(1-epsilon)))
 	print(f"N: {N}")
 	total_process_time = 0
 	max_ram_usage = 0
@@ -127,9 +126,11 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	total_process_time += res[0][0]
 	if max_ram_usage < res[0][1]:
 		max_ram_usage = res[0][1]
-	temp_string = f"FIRST RESULT: {res[1][2]}\tNUM OF ASKS: {res[1][0]}\tTIME: {res[0][0]}\tMAX RAM USAGE: {res[0][1]} MB"
+	log_runs_string = "Iteration, Result, S, Number of Asks, Time, Max RAM Megabyte Usage\n"
+	print(log_runs_string)
+	temp_string = f"0/{N}, {res[1][2]}, , {res[1][0]}, {res[0][0]}, {res[0][1]}\n"
 	print(temp_string)
-	log_string = log_string + '\n' + temp_string
+	log_runs_string = log_runs_string + temp_string
 	res = res[1]
 	S_values = [res]
 	S_prime = res[2]
@@ -152,9 +153,9 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 			total_process_time += res[0][0]
 			if max_ram_usage < res[0][1]:
 				max_ram_usage = res[0][1]
-			temp_string = f"RESULT: {res[1][2]}\tS: {S}\tNUM OF ASKS: {res[1][0]}\tITERATION: {counter_samples}/{N}\tTime: {res[0][0]}\tMAX RAM USAGE: {res[0][1]} MB"
+			temp_string = f"{counter_samples}/{N}, {res[1][2]}, {S}, {res[1][0]}, {res[0][0]}, {res[0][1]}\n"
 			print(temp_string)
-			log_string = log_string + '\n' + temp_string
+			log_runs_string = log_runs_string + temp_string
 			res = res[1]
 			
 
@@ -169,56 +170,122 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 		if S == S_prime:
 			break
 		
-
-	temp_string = f"Num external iterations: {num_iterations}\nNum internal iterations: {num_iter_internal}\nRESULT: {S_values[-1]}\nTime: {total_process_time}\nMEAN TIME PER PROCESS: {total_process_time/num_proc}\nMAX RAM USAGE: {max_ram_usage} MB\nS values: {S_values}"
-	log_string = log_string + "\n" + temp_string
+	write_log_file(os.path.join(path_dir_log_file, "log_runs.csv"), log_runs_string)
+	
+	log_result_string = "Number external iterations, Number internal iterations, Result, Optimum, Error, Time, Mean time per process, Max RAM Megabyte Usage\n"
+	print(log_result_string)
+	temp_string = f"{num_iterations}, {num_iter_internal}, {S_values[-1][2]}, {function_obj.minimum_f}, {abs(function_obj.minimum_f - S_values[-1][2])}, {total_process_time}, {total_process_time/num_proc}, {max_ram_usage}\n"
 	print(temp_string)
+	log_result_string = log_result_string + temp_string
+	write_log_file(os.path.join(path_dir_log_file, "log_results.csv"), log_result_string)
+
+	log_s_values_string = "S value\n"
+	for s_value in S_values:
+		log_s_values_string = log_s_values_string + f"{s_value[2]}\n"
+	print(log_s_values_string)
+	write_log_file(os.path.join(path_dir_log_file, "log_s_values.csv"), log_s_values_string)
 	return (total_process_time, S_values[-1])
+
+
+
 
 def main(argv):
 	# argv[0] : function name, argv[1] : # points to evaluate, argv[2] : # parallel processes
-	global num_proc, num_points, function_obj, range_stopping_criteria, path_log_file, log_string
-
+	global num_proc, num_points, function_obj, range_stopping_criteria, path_dir_log_file
 	processes_time = 0
+
+	# path of all the functions results
 	path_dir_res = os.path.join(os.path.dirname(__file__),"log_results")
 	if not os.path.exists(path_dir_res):
 		os.mkdir(path_dir_res)
+
 	# init the module which compute the function and the infos about it
 	function_name = argv[0]
+	function_json = ev.functions_json(function_name)
 
-	param_a = [20, 50]
-	param_b = [0.2, 0.8]
-	param_c = [2*math.pi, 7*math.pi]
-	dimensions = [2] + [10**(x+1) for x in range(6)]
+	# path of the function results
+	path_dir_res = os.path.join(path_dir_res, f"{function_name}")
+	if not os.path.exists(path_dir_res):
+		os.mkdir(path_dir_res)
+
+	# define the dimensions of the function to test
+	if function_json["dimension"] == "d":
+		if type(function_json["minimum_f"]) == dict and list(function_json["minimum_f"].keys())[0] == "dimension":
+			dimensions = [int(x) for x in function_json["minimum_f"]["dimension"].keys()]
+		else:
+			dimensions = [2] + [10**(x+1) for x in range(2)]
+	else:
+		dimensions = [function_json["dimension"]]
+
 	num_points = int(argv[1])
 	num_proc = int(argv[2])
 	range_stopping_criteria = 20
 	delta = 0.001
 	epsilon = 0.001
-	for temp_dim in dimensions:
-		path_dir_res_dim = os.path.join(path_dir_res, f"dim_{temp_dim}")
+	coeff_parameters = 5
+	#print(f"DIMENSIONS: {dimensions}")
+
+	for dim in dimensions:
+		# path of the results for the dimension dim
+		path_dir_res_dim = os.path.join(path_dir_res, f"dimension_{dim}")
 		if not os.path.exists(path_dir_res_dim):
 			os.mkdir(path_dir_res_dim)
-		for par_a in param_a:
-			for par_b in param_b:
-				for par_c in param_c:
-					dim = temp_dim
-					parameters = {"a" : par_a, "b" : par_b, "c" : par_c}
-					function_obj = ev.objective_function(argv[0], dim=dim, param=parameters)
-					log_string = f"TESTING FUNCTION DIM: {temp_dim} PARAM_A: {par_a} PARAM_B: {par_b} PARAM_C {par_c} OPT_POINT: {function_obj.minimum_f}\n"
-					path_log_file = os.path.join(path_dir_res_dim, f"log_dimension-{dim}_param_a-{par_a}_param_b-{par_b}_param_c-{str(par_c).replace('.','-')}.txt")
-					print(log_string)
-					processes = init_processes()
-					
-					hypo_testing_res = hypothesis_testing(delta, epsilon)
-					temp_string = f"ERROR: {abs(min_f - hypo_testing_res[1][2])}"
-					print(temp_string + "\n\n\n")
-					log_string = log_string + "\n" + temp_string
-					processes_time += hypo_testing_res[0]
-					kill_processes(processes)
-					write_log_file(path_log_file, log_string)
 
-	print(f"TOTAL TIME: {processes_time}\tMEAN PER PROCESS TIME: {processes_time/num_proc}")
+		function_obj = ev.objective_function(function_name, dim=dim)
+
+		# if function accepts parameters
+		if function_obj.parameters != None:
+			# dictionary with all the parameters values, for each parameter
+			comb_parameters = {}
+			max_len_param_val = 0
+			for param_name in function_obj.parameters_names:
+				if function_obj.minimum_f_param != None and function_obj.minimum_f_param[0] == param_name:
+					comb_parameters[param_name] = function_obj.minimum_f_param[1]
+				else:
+					param_value = function_obj.parameters_values[param_name]
+					if type(param_value) == list:
+						if type(param_value[0]) == list:
+							temp_matrix = []
+							for row in param_value:
+								temp_matrix.append([x*coeff_parameters for x in row])
+							comb_parameters[param_name] = [param_value, temp_matrix]
+						else:
+							comb_parameters[param_name] = [param_value, [x*coeff_parameters for x in param_value]]
+					else:
+						comb_parameters[param_name] = [param_value, param_value*coeff_parameters]
+				if len(comb_parameters[param_name]) > max_len_param_val:
+						max_len_param_val = len(comb_parameters[param_name])
+			#print(f"Parameters: {comb_parameters}")
+
+			# for each possible combination of the parameters values
+			for param_values_list in itertools.product(*[comb_parameters[param_name] for param_name in function_obj.parameters_names]):
+				i=0
+				temp_param_values = {}
+				for param_name in function_obj.parameters_names:
+					temp_param_values[param_name] = param_values_list[i]
+					i+=1
+				function_obj.set_parameters(temp_param_values)
+				print(f"TESTING FUNCTION DIM: {dim} PARAMETERS: {[ (param_name, str(temp_param_values[param_name])) for param_name in function_obj.parameters_names ]} OPT_POINT: {function_obj.minimum_f}\n")
+				path_dir_log_file = os.path.join(path_dir_res_dim, f"function_{function_name}_dimension_{dim}_parameters_{[ (param_name, temp_param_values[param_name]) for param_name in function_obj.parameters_names ]}")
+				if not os.path.exists(path_dir_log_file):
+					os.mkdir(path_dir_log_file)
+
+				processes = init_processes()
+				hypo_testing_res = hypothesis_testing(delta, epsilon)
+
+				kill_processes(processes)
+
+		# if function does not accept parameters
+		else:
+			print(f"TESTING FUNCTION DIM: {dim} OPT_POINT: {function_obj.minimum_f}\n")
+			path_dir_log_file = os.path.join(path_dir_res_dim, f"function_{function_name}_dimension_{dim}")
+			if not os.path.exists(path_dir_log_file):
+				os.mkdir(path_dir_log_file)
+
+			processes = init_processes()
+			hypo_testing_res = hypothesis_testing(delta, epsilon)
+
+			kill_processes(processes)
 	
 
 if __name__ == "__main__":

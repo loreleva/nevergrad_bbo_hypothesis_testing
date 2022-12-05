@@ -170,7 +170,7 @@
         "dimension": "d",
         "minimum_x": null,
         "minimum_f": null,
-        "parameters_description": "The default values are for d=2\ndouble m (default = 5)\nvector[m] c (default = [1,2,5,2,3])\nmatrix[m x d]  A (default = [\n [3,5],\n [5,2],\n [2,1],\n [1,4],\n [7,9]\n])",
+        "parameters": "The default values are for d=2\ndouble m (default = 5)\nvector[m] c (default = [1,2,5,2,3])\nmatrix[m x d]  A (default = [\n [3,5],\n [5,2],\n [2,1],\n [1,4],\n [7,9]\n])",
         "default_parameters" : {"m" : 5, "c" : [1,2,5,2,3], "A" : [[3,5], [5,2], [2,1], [1,4], [7,9]]},
         "parameters_names" : ["m", "c", "A"],
         "input_domain":[
@@ -313,7 +313,7 @@
         "dimension": "d",
         "minimum_x": "minimum_x = [1/(x+1) for x in range(d)]",
         "minimum_f": 0,
-        "parameters_description" : "double b (default = 10)",
+        "parameters" : "double b (default = 10)",
         "default_parameters" : {"b" : 10},
         "parameters_names" : ["b"],
         "input_domain":

@@ -111,16 +111,17 @@ class objective_function():
 		elif type(json_func["minimum_f"]) == dict:
 			self.minimum_f_dict = json_func["minimum_f"]
 			self.minimum_f_param = list(self.minimum_f_dict.keys())[0]
+			self.minimum_f_param = (self.minimum_f_param, list(self.minimum_f_dict[self.minimum_f_param].keys()))
 
 			# if optimum depends on function dimension
-			if self.minimum_f_param == "dimension":
-				if str(self.dimension) not in list(self.minimum_f_dict[self.minimum_f_param].keys()):
+			if self.minimum_f_param[0] == "dimension":
+				if str(self.dimension) not in list(self.minimum_f_dict[self.minimum_f_param[0]].keys()):
 					self.minimum_f = None
 				else:
-					self.minimum_f = self.minimum_f_dict[self.minimum_f_param][str(self.dimension)]
+					self.minimum_f = self.minimum_f_dict[self.minimum_f_param[0]][str(self.dimension)]
 
-			else: 
-				self.minimum_f = self.minimum_f_dict[self.minimum_f_param][str(self.parameters_values[self.minimum_f_param])]
+			else:
+				self.minimum_f = self.minimum_f_dict[self.minimum_f_param[0]][str(self.parameters_values[self.minimum_f_param[0]])]
 
 		else:
 			self.minimum_f = json_func["minimum_f"]	
@@ -171,7 +172,9 @@ class JsonNotLoaded(Exception):
 class sfuFunctionError(Exception):
 	pass
 
-	
+
+def functions_json(function_name):
+	return load_json()[function_name]
 
 def search_function(filters=None):
 	json_functions = load_json()
