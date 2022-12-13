@@ -2,11 +2,7 @@ import sys, time
 from functions import *
 
 if __name__ == "__main__":
-	test = objective_function("schwefel_function", dim=5)
-	print(f"dimension: {test.dimension}")
-	print(f"minimum_x: {test.minimum_x}")
-	print(f"minimum_f: {test.minimum_f}")
-	print(f"Input Lower Bound: {test.input_lb}\nInput Upper Bound: {test.input_ub}")
+	print(f"Result search: {search_function({'minimum_f' : True})}")
 	#print("Functions with dimension d:{}\n".format(search_function({"dimension" : "d"})))
 	#function_selected = "trid_function"
 	#function_dimension = 5

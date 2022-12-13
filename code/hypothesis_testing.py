@@ -13,6 +13,7 @@ q_inp = None
 q_res = None
 range_stopping_criteria = None
 path_dir_log_file = None
+csv_sep = ";"
 
 
 def minimum_f(dim=None):
@@ -43,15 +44,18 @@ def kill_processes(processes):
 		x.kill()
 
 
-def entropy(samples):
-	sum_samples = sum([math.exp(x) for x in samples])
-	prob_samples = [math.exp(x) / sum_samples for x in samples]
-	return - sum([x * math.log2(x) for x in prob_samples])
+def std_dev(samples):
+	N = len(samples)
+	sample_mean = sum(samples) / N
+	res = math.sqrt(sum([(x - sample_mean)**2 for x in samples]) / N)
+	return res
 
 def stopping_criteria(samples):
-	if entropy(samples) > math.log2(len(samples)) - 1e-10:
+	if std_dev(samples) < 1e-6:
 		return True
 	return False
+
+
 
 def obtain_queries(optimizer):
 	global num_points
@@ -115,8 +119,8 @@ def write_log_file(path, string_res):
 
 
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
-	global q_inp, q_res, path_dir_log_file, num_proc, function_obj
-	N = 10#math.ceil((math.log(delta)/math.log(1-epsilon)))
+	global q_inp, q_res, path_dir_log_file, num_proc, function_obj, csv_sep
+	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
 	print(f"N: {N}")
 	total_process_time = 0
 	max_ram_usage = 0
@@ -126,13 +130,13 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	total_process_time += res[0][0]
 	if max_ram_usage < res[0][1]:
 		max_ram_usage = res[0][1]
-	log_runs_string = "Iteration, Result, S, Number of Asks, Time, Max RAM Megabyte Usage\n"
+	log_runs_string = f"Iteration{csv_sep} Result{csv_sep} S{csv_sep} Number of Asks{csv_sep} Time{csv_sep} Max RAM Megabyte Usage\n"
 	print(log_runs_string)
-	temp_string = f"0/{N}, {res[1][2]}, , {res[1][0]}, {res[0][0]}, {res[0][1]}\n"
+	temp_string = f"0/{N}{csv_sep} {res[1][2]}{csv_sep} {csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
 	print(temp_string)
 	log_runs_string = log_runs_string + temp_string
 	res = res[1]
-	S_values = [res]
+	S_values = [(0, res[1], res[2])]
 	S_prime = res[2]
 	num_iterations = 0
 	num_iter_internal = 0
@@ -153,7 +157,7 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 			total_process_time += res[0][0]
 			if max_ram_usage < res[0][1]:
 				max_ram_usage = res[0][1]
-			temp_string = f"{counter_samples}/{N}, {res[1][2]}, {S}, {res[1][0]}, {res[0][0]}, {res[0][1]}\n"
+			temp_string = f"{counter_samples}/{N}{csv_sep} {res[1][2]}{csv_sep} {S}{csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
 			print(temp_string)
 			log_runs_string = log_runs_string + temp_string
 			res = res[1]
@@ -162,7 +166,7 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 			# if result smaller than starting S, restart
 			if (res[2] + tolerance) < S:
 				S_prime = res[2]
-				S_values.append(res)
+				S_values.append((num_iter_internal, res[1], res[2]))
 				write_string = ""
 				break
 
@@ -172,22 +176,22 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 		
 	write_log_file(os.path.join(path_dir_log_file, "log_runs.csv"), log_runs_string)
 	
-	log_result_string = "Number external iterations, Number internal iterations, Result, Optimum, Error, Time, Mean time per process, Max RAM Megabyte Usage\n"
+	log_result_string = f"Number external iterations{csv_sep} Number internal iterations{csv_sep} Result{csv_sep} Point Result{csv_sep} Optimum{csv_sep} Point Optimum{csv_sep} Error{csv_sep} Time{csv_sep} Mean time per process{csv_sep} Max RAM Megabyte Usage\n"
 	print(log_result_string)
-	temp_string = f"{num_iterations}, {num_iter_internal}, {S_values[-1][2]}, {function_obj.minimum_f}, {abs(function_obj.minimum_f - S_values[-1][2])}, {total_process_time}, {total_process_time/num_proc}, {max_ram_usage}\n"
+	temp_string = f"{num_iterations}{csv_sep} {num_iter_internal}{csv_sep} {S_values[-1][2]}{csv_sep} {S_values[-1][1]}{csv_sep} {function_obj.minimum_f}{csv_sep} {function_obj.minimum_x}{csv_sep} {abs(function_obj.minimum_f - S_values[-1][2])}{csv_sep} {total_process_time}{csv_sep} {total_process_time/num_proc}{csv_sep} {max_ram_usage}\n"
 	print(temp_string)
 	log_result_string = log_result_string + temp_string
 	write_log_file(os.path.join(path_dir_log_file, "log_results.csv"), log_result_string)
 
-	log_s_values_string = "S value\n"
+	log_s_values_string = f"Internal iteration when assigned{csv_sep} S value\n"
 	for s_value in S_values:
-		log_s_values_string = log_s_values_string + f"{s_value[2]}\n"
+		log_s_values_string = log_s_values_string + f"{s_value[0]}{csv_sep} {s_value[2]}\n"
 	print(log_s_values_string)
 	write_log_file(os.path.join(path_dir_log_file, "log_s_values.csv"), log_s_values_string)
 	return (total_process_time, S_values[-1])
 
 
-
+# EGGHOLDER RESULT FUNCTION AND SAVE ALSO POINT OF OPTIMUMS
 
 def main(argv):
 	# argv[0] : function name, argv[1] : # points to evaluate, argv[2] : # parallel processes
@@ -223,7 +227,6 @@ def main(argv):
 	delta = 0.001
 	epsilon = 0.001
 	coeff_parameters = 5
-	#print(f"DIMENSIONS: {dimensions}")
 
 	for dim in dimensions:
 		# path of the results for the dimension dim
@@ -255,7 +258,6 @@ def main(argv):
 						comb_parameters[param_name] = [param_value, param_value*coeff_parameters]
 				if len(comb_parameters[param_name]) > max_len_param_val:
 						max_len_param_val = len(comb_parameters[param_name])
-			#print(f"Parameters: {comb_parameters}")
 
 			# for each possible combination of the parameters values
 			for param_values_list in itertools.product(*[comb_parameters[param_name] for param_name in function_obj.parameters_names]):
@@ -287,6 +289,9 @@ def main(argv):
 
 			kill_processes(processes)
 	
+
+
+
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
