@@ -130,9 +130,9 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	total_process_time += res[0][0]
 	if max_ram_usage < res[0][1]:
 		max_ram_usage = res[0][1]
-	log_runs_string = f"Iteration{csv_sep} Optimum Found{csv_sep} S{csv_sep} Number of Asks{csv_sep} Time{csv_sep} Max RAM Megabyte Usage\n"
+	log_runs_string = f"Index{csv_sep} Iteration{csv_sep} Optimum Found{csv_sep} S{csv_sep} Number of Asks{csv_sep} Time{csv_sep} Max RAM Megabyte Usage\n"
 	print(log_runs_string)
-	temp_string = f"0/{N}{csv_sep} {res[1][2]}{csv_sep} {csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
+	temp_string = f"0{csv_sep} 0/{N}{csv_sep} {res[1][2]}{csv_sep} {csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
 	print(temp_string)
 	log_runs_string = log_runs_string + temp_string
 	res = res[1]
@@ -140,6 +140,7 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	S_prime = res[2]
 	num_iterations = 0
 	num_iter_internal = 0
+	idx_csv = 1
 	write_string = ""
 	while (1):
 		S = S_prime
@@ -157,7 +158,8 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 			total_process_time += res[0][0]
 			if max_ram_usage < res[0][1]:
 				max_ram_usage = res[0][1]
-			temp_string = f"{counter_samples}/{N}{csv_sep} {res[1][2]}{csv_sep} {S}{csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
+			temp_string = f"{idx_csv}{csv_sep} {counter_samples}/{N}{csv_sep} {res[1][2]}{csv_sep} {S}{csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
+			idx_csv += 1
 			print(temp_string)
 			log_runs_string = log_runs_string + temp_string
 			res = res[1]
@@ -176,9 +178,9 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 		
 	write_log_file(os.path.join(path_dir_log_file, "log_runs.csv"), log_runs_string)
 	
-	log_result_string = f"Number external iterations{csv_sep} Number internal iterations{csv_sep} Optimum Found{csv_sep} Input Optimum Found{csv_sep} Function Optimum{csv_sep} Function Input Optimum{csv_sep} Error{csv_sep} Time{csv_sep} Mean time per process{csv_sep} Max RAM Megabyte Usage\n"
+	log_result_string = f"Runs of nevergrad{csv_sep} Number external iterations{csv_sep} Number internal iterations{csv_sep} Optimum Found{csv_sep} Input Optimum Found{csv_sep} Function Optimum{csv_sep} Function Input Optimum{csv_sep} Error{csv_sep} Time{csv_sep} Mean time per process{csv_sep} Max RAM Megabyte Usage\n"
 	print(log_result_string)
-	temp_string = f"{num_iterations}{csv_sep} {num_iter_internal}{csv_sep} {S_values[-1][2]}{csv_sep} {S_values[-1][1]}{csv_sep} {function_obj.minimum_f}{csv_sep} {function_obj.minimum_x}{csv_sep} {abs(function_obj.minimum_f - S_values[-1][2])}{csv_sep} {total_process_time}{csv_sep} {total_process_time/num_proc}{csv_sep} {max_ram_usage}\n"
+	temp_string = f"{idx_csv+1}{csv_sep} {num_iterations}{csv_sep} {num_iter_internal}{csv_sep} {S_values[-1][2]}{csv_sep} {S_values[-1][1]}{csv_sep} {function_obj.minimum_f}{csv_sep} {function_obj.minimum_x}{csv_sep} {abs(function_obj.minimum_f - S_values[-1][2])}{csv_sep} {total_process_time}{csv_sep} {total_process_time/num_proc}{csv_sep} {max_ram_usage}\n"
 	print(temp_string)
 	log_result_string = log_result_string + temp_string
 	write_log_file(os.path.join(path_dir_log_file, "log_results.csv"), log_result_string)
