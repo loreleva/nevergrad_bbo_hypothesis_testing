@@ -81,15 +81,13 @@ def compute_points(input_points):
 
 def run_nevergrad():
 	global range_stopping_criteria, log_string, function_obj
-	function_obj.input_lb = None
-	function_obj.input_ub = None
 	if function_obj.input_lb != None and function_obj.input_ub != None:
 		param = ng.p.Array(shape=(function_obj.dimension,), lower=function_obj.input_lb, upper=function_obj.input_ub)
 	else:
 		param = ng.p.Array(shape=(function_obj.dimension,))
 
 	# init nevergrad optimizer
-	optimizer = ng.optimizers.NGOpt(parametrization=param, budget=10**6)
+	optimizer = ng.optimizers.NGOpt10(parametrization=param, budget=10**6)
 
 	results = []
 	for x in range(range_stopping_criteria):
@@ -100,7 +98,8 @@ def run_nevergrad():
 		#print(f"RESULT : {results}")
 		update_optimizer(optimizer, input_points, computed_points)
 
-	while (not stopping_criteria(results)):
+	while (not stopping_criteria(results) and optimizer.num_ask <= 100000):
+		#print(optimizer.num_ask)
 		input_points = obtain_queries(optimizer)
 		computed_points = compute_points(input_points)
 		results.append(min(computed_points))
@@ -187,7 +186,7 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 
 	log_s_values_string = f"Internal iteration when assigned{csv_sep} S value\n"
 	for s_value in S_values:
-		log_s_values_string = log_s_values_string + f"{s_value[0]}{csv_sep} {s_value[2]}\n"
+		log_s_values_string = log_s_values_string + f"{s_value[0]}/{N}{csv_sep} {s_value[2]}\n"
 	print(log_s_values_string)
 	write_log_file(os.path.join(path_dir_log_file, "log_s_values.csv"), log_s_values_string)
 	return (total_process_time, S_values[-1])

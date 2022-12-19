@@ -768,7 +768,7 @@
         "filepath_m": "functions_parameters/perm_function_d,_B.m"
     },
     "powell_function": {
-        "dimension": "d",
+        "dimension": "4",
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
