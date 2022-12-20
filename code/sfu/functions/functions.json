@@ -624,8 +624,8 @@
         "dimension": "2",
         "minimum_x": "minimum_x = [ [-(math.pi),12.275], [math.pi,2.275], [9.42478,2.475] ]",
         "minimum_f": 0.397887,
-        "parameters": "double a (default = 1)\ndouble b (default = 5.1 / (4\\pi**2))\ndouble c (default = 5)\ndouble r (default = 6)\ndouble s (default = 10)\ndouble t (default = 1 / (8\\pi))",
-        "default_parameters" : {"a" : 1, "b" : "b = 5.1 / (4 * (math.pi**2))", "c" : 5, "r" : 6, "s" : 10, "t" : "t = 1 / (8 * math.pi)"},
+        "parameters": "double a (default = 1)\ndouble b (default = 5.1 / (4\\pi**2))\ndouble c (default = 5/\\pi)\ndouble r (default = 6)\ndouble s (default = 10)\ndouble t (default = 1 / (8\\pi))",
+        "default_parameters" : {"a" : 1, "b" : "b = 5.1 / (4 * (math.pi**2))", "c" : "5 / math.pi", "r" : 6, "s" : 10, "t" : "t = 1 / (8 * math.pi)"},
         "parameters_names" : ["a", "b", "c", "r", "s", "t"],
         "input_domain":
         [
