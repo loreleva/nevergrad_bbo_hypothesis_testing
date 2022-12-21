@@ -120,6 +120,7 @@ def write_log_file(path, string_res):
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	global q_inp, q_res, path_dir_log_file, num_proc, function_obj, csv_sep
 	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
+	start_time = time.time()
 	print(f"N: {N}")
 	total_process_time = 0
 	max_ram_usage = 0
@@ -177,9 +178,9 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 		
 	write_log_file(os.path.join(path_dir_log_file, "log_runs.csv"), log_runs_string)
 	
-	log_result_string = f"Runs of nevergrad{csv_sep} Number external iterations{csv_sep} Number internal iterations{csv_sep} Optimum Found{csv_sep} Input Optimum Found{csv_sep} Function Optimum{csv_sep} Function Input Optimum{csv_sep} Error{csv_sep} Time{csv_sep} Mean time per process{csv_sep} Max RAM Megabyte Usage\n"
+	log_result_string = f"Runs of nevergrad{csv_sep} Number external iterations{csv_sep} Number internal iterations{csv_sep} Optimum Found{csv_sep} Input Optimum Found{csv_sep} Function Optimum{csv_sep} Function Input Optimum{csv_sep} Error{csv_sep} Total algorithm execution time{csv_sep} Sum of processes' system and user CPU time{csv_sep} Mean system and user CPU time per process{csv_sep} Max RAM Megabyte Usage\n"
 	print(log_result_string)
-	temp_string = f"{idx_csv+1}{csv_sep} {num_iterations}{csv_sep} {num_iter_internal}{csv_sep} {S_values[-1][2]}{csv_sep} {S_values[-1][1]}{csv_sep} {function_obj.minimum_f}{csv_sep} {function_obj.minimum_x}{csv_sep} {abs(function_obj.minimum_f - S_values[-1][2])}{csv_sep} {total_process_time}{csv_sep} {total_process_time/num_proc}{csv_sep} {max_ram_usage}\n"
+	temp_string = f"{idx_csv+1}{csv_sep} {num_iterations}{csv_sep} {num_iter_internal}{csv_sep} {S_values[-1][2]}{csv_sep} {S_values[-1][1]}{csv_sep} {function_obj.minimum_f}{csv_sep} {function_obj.minimum_x}{csv_sep} {abs(function_obj.minimum_f - S_values[-1][2])}{csv_sep} {time.time() - start_time}{csv_sep} {total_process_time}{csv_sep} {total_process_time/num_proc}{csv_sep} {max_ram_usage}\n"
 	print(temp_string)
 	log_result_string = log_result_string + temp_string
 	write_log_file(os.path.join(path_dir_log_file, "log_results.csv"), log_result_string)
