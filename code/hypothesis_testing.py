@@ -1,6 +1,7 @@
 import nevergrad as ng
 import sfu.evaluation_code.functions as ev
-import time, sys, os, math, itertools
+import time, sys, os, math, itertools, random
+from datetime import timedelta
 from multiprocessing import Process, Queue
 from memory_profiler import memory_usage
 
@@ -80,14 +81,26 @@ def compute_points(input_points):
 	return results
 
 def run_nevergrad():
-	global range_stopping_criteria, log_string, function_obj
+	global range_stopping_criteria, log_string, function_obj, num_points
 	if function_obj.input_lb != None and function_obj.input_ub != None:
 		param = ng.p.Array(shape=(function_obj.dimension,), lower=function_obj.input_lb, upper=function_obj.input_ub)
 	else:
 		param = ng.p.Array(shape=(function_obj.dimension,))
 
 	# init nevergrad optimizer
-	optimizer = ng.optimizers.NGOpt10(parametrization=param, budget=10**6)
+	optimizer = ng.optimizers.NGOpt10(parametrization=param, num_workers=num_points, budget=10**6)
+	if function_obj.input_lb != None and function_obj.input_ub != None:
+		for n in range(num_points):
+			point = []
+			for dim in range(param.dimension):
+				point.append(random.uniform(function_obj.input_lb[dim], function_obj.input_ub[dim]))
+			optimizer.suggest(point)
+	else:
+		for n in range(num_points):
+			point = []
+			for dim in range(param.dimension):
+				point.append(random.uniform(-100,100))
+			optimizer.suggest(point)
 
 	results = []
 	for x in range(range_stopping_criteria):
@@ -116,59 +129,147 @@ def write_log_file(path, string_res):
 		f.write(string_res)
 		f.close()
 
+def time_to_str(seconds):
+	str_time = str(timedelta(seconds=seconds))
+	res = ""
+	hms = str_time.split()[-1].split(":")
+	res = f"{hms[0]}H : {hms[1]}M : {hms[2]}S"
+	if "day" in str_time:
+		days = str_time.split()[0]
+		hms = str_time.split()[-1].split(":")
+		res = f"{days}D : " + res
+	return res
+
+def eucl_dist(x, y):
+	sum_diff = 0
+	for idx in range(len(x)):
+		sum_diff += (y[idx] - x[idx])**2
+	return math.sqrt(sum_diff)
+
+def get_dist(algo_input):
+	global function_obj
+	if function_obj.minimum_x == None:
+		return None
+	else:
+		if type(function_obj.minimum_x[0]) != list:
+			res = eucl_dist(algo_input, function_obj.minimum_x)
+			return res
+		else:
+			results = []
+			for inp in function_obj.minimum_x:
+				results.append(eucl_dist(algo_input, inp))
+			res = min(results)
+			return res
+
+
+
 
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	global q_inp, q_res, path_dir_log_file, num_proc, function_obj, csv_sep
+	# init N
 	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
+
+	# track execution time of algorithm
 	start_time = time.time()
+	
 	print(f"N: {N}")
+	
 	total_process_time = 0
 	max_ram_usage = 0
-	# init S
+	
+	# request execution of one run of nevergrad and obtain result
 	q_inp.put(1)
 	res = q_res.get()
-	total_process_time += res[0][0]
+	
+	processes_runs_time = [res[0][0]]
+	number_of_asks = [res[1][0]]
+	ram_usage = [res[0][1]]
+	
 	if max_ram_usage < res[0][1]:
 		max_ram_usage = res[0][1]
-	log_runs_string = f"Index{csv_sep} Iteration{csv_sep} Optimum Found{csv_sep} S{csv_sep} Number of Asks{csv_sep} Time{csv_sep} Max RAM Megabyte Usage\n"
+
+	idx_csv = 1
+	# write data into log csv
+	log_runs_string = (
+						f"Index{csv_sep} "
+						f"Iteration{csv_sep} "
+						f"Optimum Found{csv_sep} "
+						f"S{csv_sep} "
+						f"Number of Asks{csv_sep} "
+						f"Time{csv_sep} "
+						f"Max RAM Megabyte Usage\n"
+					)
 	print(log_runs_string)
-	temp_string = f"0{csv_sep} 0/{N}{csv_sep} {res[1][2]}{csv_sep} {csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
+	temp_string = (
+					f"{idx_csv}{csv_sep} "
+					f"0/{N}{csv_sep} "
+					f"{res[1][2]}{csv_sep} "
+					f"{csv_sep} "
+					f"{res[1][0]}{csv_sep} "
+					f"{time_to_str(res[0][0])}{csv_sep} "
+					f"{res[0][1]}\n"
+				)
 	print(temp_string)
 	log_runs_string = log_runs_string + temp_string
+	
+	# init S and S prime
 	res = res[1]
 	S_values = [(0, res[1], res[2])]
 	S_prime = res[2]
+
+	correct_opts = []
+	num_correct_opts = 0
+	if S_prime <= (function_obj.minimum_f + tolerance):
+		num_correct_opts += 1
+	correct_opts.append((idx_csv,num_correct_opts)) 
+	
 	num_iterations = 0
-	num_iter_internal = 0
-	idx_csv = 1
+	
 	write_string = ""
+
 	while (1):
 		S = S_prime
 		num_iterations += 1
 		
+		# if size of the queue is less than N, add requests for nevergrad runs
 		q_sizes = q_inp.qsize() + q_res.qsize()
 		for x in range(N - q_sizes):
 			q_inp.put(1)
 
+		# check results of N nevergrad runs, or exit from the loop if value better than S is found
 		counter_samples = 0
 		while(counter_samples < N):
-			num_iter_internal += 1
 			counter_samples += 1
+			idx_csv += 1
+
 			res = q_res.get()
-			total_process_time += res[0][0]
+			processes_runs_time.append(res[0][0])
+			number_of_asks.append(res[1][0])
+			ram_usage.append(res[0][1])
 			if max_ram_usage < res[0][1]:
 				max_ram_usage = res[0][1]
-			temp_string = f"{idx_csv}{csv_sep} {counter_samples}/{N}{csv_sep} {res[1][2]}{csv_sep} {S}{csv_sep} {res[1][0]}{csv_sep} {res[0][0]}{csv_sep} {res[0][1]}\n"
-			idx_csv += 1
+
+			temp_string = (
+							f"{idx_csv}{csv_sep} "
+							f"{counter_samples}/{N}{csv_sep} "
+							f"{res[1][2]}{csv_sep} "
+							f"{S}{csv_sep} "
+							f"{res[1][0]}{csv_sep} "
+							f"{time_to_str(res[0][0])}{csv_sep} "
+							f"{res[0][1]}\n"
+						)
 			print(temp_string)
 			log_runs_string = log_runs_string + temp_string
 			res = res[1]
-			
+
+			if res[2] <= (function_obj.minimum_f + tolerance):
+				num_correct_opts += 1
+			correct_opts.append((idx_csv,num_correct_opts))
 
 			# if result smaller than starting S, restart
 			if (res[2] + tolerance) < S:
 				S_prime = res[2]
-				S_values.append((num_iter_internal, res[1], res[2]))
+				S_values.append((counter_samples, res[1], res[2]))
 				write_string = ""
 				break
 
@@ -177,28 +278,85 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 			break
 		
 	write_log_file(os.path.join(path_dir_log_file, "log_runs.csv"), log_runs_string)
-	
-	log_result_string = f"Runs of nevergrad{csv_sep} Number external iterations{csv_sep} Number internal iterations{csv_sep} Optimum Found{csv_sep} Input Optimum Found{csv_sep} Function Optimum{csv_sep} Function Input Optimum{csv_sep} Error{csv_sep} Total algorithm execution time{csv_sep} Sum of processes' system and user CPU time{csv_sep} Mean system and user CPU time per process{csv_sep} Max RAM Megabyte Usage\n"
+	total_processes_runs_time = sum(processes_runs_time)
+	mean_processes_runs_time = total_processes_runs_time/len(processes_runs_time)
+	std_dev_processes_runs_time = std_dev(processes_runs_time)
+	mean_number_of_asks = sum(number_of_asks)/len(number_of_asks)
+	std_dev_number_of_asks = std_dev(number_of_asks)
+	mean_ram_usage = sum(ram_usage)/len(ram_usage)
+	std_dev_ram_usage = std_dev(ram_usage)
+
+	log_result_string = (
+							f"Runs of nevergrad{csv_sep} "
+							f"Number external iterations{csv_sep} "
+							f"Number internal iterations{csv_sep} "
+							f"Optimum Found{csv_sep} "
+							f"Input Optimum Found{csv_sep} "
+							f"Function Optimum{csv_sep} "
+							f"Function Input Optimum{csv_sep} "
+							f"Error{csv_sep} "
+							f"Input Error{csv_sep}"
+							f"Correctness ratio{csv_sep}"
+							f"Total algorithm execution time{csv_sep} "
+							f"Sum of processes' system and user CPU time{csv_sep} "
+							f"Mean system and user CPU time per process{csv_sep} "
+							f"Mean of nevergrad runs' system and user CPU time {csv_sep} "
+							f"Standard deviation of nevergrad runs' system and user CPU time{csv_sep} "
+							f"Mean of number of asks in nevergrad runs{csv_sep} "
+							f"Standard deviation of number of asks in nevergrad runs{csv_sep} "
+							f"Max RAM Megabyte usage{csv_sep} "
+							f"Mean RAM Megabyte usage{csv_sep} "
+							f"Standard deviation of RAM Megabyte usage\n"
+						)
 	print(log_result_string)
-	temp_string = f"{idx_csv+1}{csv_sep} {num_iterations}{csv_sep} {num_iter_internal}{csv_sep} {S_values[-1][2]}{csv_sep} {S_values[-1][1]}{csv_sep} {function_obj.minimum_f}{csv_sep} {function_obj.minimum_x}{csv_sep} {abs(function_obj.minimum_f - S_values[-1][2])}{csv_sep} {time.time() - start_time}{csv_sep} {total_process_time}{csv_sep} {total_process_time/num_proc}{csv_sep} {max_ram_usage}\n"
+	temp_string = (
+					f"{idx_csv}{csv_sep} "
+					f"{num_iterations}{csv_sep} "
+					f"{idx_csv-1}{csv_sep} "
+					f"{S_values[-1][2]}{csv_sep} "
+					f"{S_values[-1][1]}{csv_sep} "
+					f"{function_obj.minimum_f}{csv_sep} "
+					f"{function_obj.minimum_x}{csv_sep} "
+					f"{abs(function_obj.minimum_f - S_values[-1][2])}{csv_sep} "
+					f"{get_dist(S_values[-1][1])}{csv_sep} "
+					f"{correct_opts[-1][1]/idx_csv}{csv_sep} "
+					f"{time_to_str(time.time() - start_time)}{csv_sep} "
+					f"{time_to_str(total_processes_runs_time)}{csv_sep} "
+					f"{time_to_str(total_processes_runs_time/num_proc)}{csv_sep} "
+					f"{mean_processes_runs_time}{csv_sep} "
+					f"{std_dev_processes_runs_time}{csv_sep} "
+					f"{mean_number_of_asks}{csv_sep} "
+					f"{std_dev_number_of_asks}{csv_sep} "
+					f"{max_ram_usage}{csv_sep} "
+					f"{mean_ram_usage}{csv_sep} "
+					f"{std_dev_ram_usage}\n"
+				)
 	print(temp_string)
 	log_result_string = log_result_string + temp_string
 	write_log_file(os.path.join(path_dir_log_file, "log_results.csv"), log_result_string)
 
-	log_s_values_string = f"Internal iteration when assigned{csv_sep} S value\n"
+	log_s_values_string = (
+							f"Internal iteration when assigned{csv_sep} "
+							f"S value\n"
+						)
 	for s_value in S_values:
 		log_s_values_string = log_s_values_string + f"{s_value[0]}/{N}{csv_sep} {s_value[2]}\n"
 	print(log_s_values_string)
 	write_log_file(os.path.join(path_dir_log_file, "log_s_values.csv"), log_s_values_string)
+
+	log_correctness_ratio_string = (
+									f"Index Run{csv_sep} "
+									f"Number of correct results\n"
+								)
+	for val_correct_ratio in correct_opts:
+		log_correctness_ratio_string = log_correctness_ratio_string + f"{val_correct_ratio[0]}{csv_sep} {val_correct_ratio[1]}\n"
+	write_log_file(os.path.join(path_dir_log_file, "log_correctness_ratio.csv"), log_correctness_ratio_string)
+
 	return (total_process_time, S_values[-1])
-
-
-# EGGHOLDER RESULT FUNCTION AND SAVE ALSO POINT OF OPTIMUMS
 
 def main(argv):
 	# argv[0] : function name, argv[1] : # points to evaluate, argv[2] : # parallel processes
 	global num_proc, num_points, function_obj, range_stopping_criteria, path_dir_log_file
-	processes_time = 0
 
 	# path of all the functions results
 	path_dir_res = os.path.join(os.path.dirname(__file__),"log_results")
