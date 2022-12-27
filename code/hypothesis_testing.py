@@ -167,7 +167,7 @@ def get_dist(algo_input):
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	global q_inp, q_res, path_dir_log_file, num_proc, function_obj, csv_sep
 	# init N
-	N = 10#math.ceil((math.log(delta)/math.log(1-epsilon)))
+	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
 
 	# track execution time of algorithm
 	start_time = time.time()
