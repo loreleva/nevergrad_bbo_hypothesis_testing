@@ -167,7 +167,7 @@ def get_dist(algo_input):
 def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 	global q_inp, q_res, path_dir_log_file, num_proc, function_obj, csv_sep
 	# init N
-	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
+	N = 10#math.ceil((math.log(delta)/math.log(1-epsilon)))
 
 	# track execution time of algorithm
 	start_time = time.time()
@@ -206,7 +206,7 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 					f"{res[1][2]}{csv_sep} "
 					f"{csv_sep} "
 					f"{res[1][0]}{csv_sep} "
-					f"{time_to_str(res[0][0])}{csv_sep} "
+					f"{res[0][0]}{csv_sep} "
 					f"{res[0][1]}\n"
 				)
 	print(temp_string)
@@ -219,9 +219,9 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 
 	correct_opts = []
 	num_correct_opts = 0
-	if S_prime <= (function_obj.minimum_f + tolerance):
+	if abs(function_obj.minimum_f - S_prime) <= tolerance:
 		num_correct_opts += 1
-	correct_opts.append((idx_csv,num_correct_opts)) 
+	correct_opts.append((idx_csv, num_correct_opts, S_prime, function_obj.minimum_f, abs(function_obj.minimum_f - S_prime))) 
 	
 	num_iterations = 0
 	
@@ -255,16 +255,16 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 							f"{res[1][2]}{csv_sep} "
 							f"{S}{csv_sep} "
 							f"{res[1][0]}{csv_sep} "
-							f"{time_to_str(res[0][0])}{csv_sep} "
+							f"{res[0][0]}{csv_sep} "
 							f"{res[0][1]}\n"
 						)
 			print(temp_string)
 			log_runs_string = log_runs_string + temp_string
 			res = res[1]
 
-			if res[2] <= (function_obj.minimum_f + tolerance):
+			if abs(function_obj.minimum_f - res[2]) <= tolerance:
 				num_correct_opts += 1
-			correct_opts.append((idx_csv,num_correct_opts))
+			correct_opts.append((idx_csv, num_correct_opts, res[2], function_obj.minimum_f, abs(function_obj.minimum_f - res[2])))
 
 			# if result smaller than starting S, restart
 			if (res[2] + tolerance) < S:
@@ -346,10 +346,19 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 
 	log_correctness_ratio_string = (
 									f"Index Run{csv_sep} "
-									f"Number of correct results\n"
+									f"Number of correct results{csv_sep} "
+									f"Optimum found{csv_sep} "
+									f"Global optimum{csv_sep} "
+									f"Error\n"
 								)
 	for val_correct_ratio in correct_opts:
-		log_correctness_ratio_string = log_correctness_ratio_string + f"{val_correct_ratio[0]}{csv_sep} {val_correct_ratio[1]}\n"
+		log_correctness_ratio_string = log_correctness_ratio_string + (
+			f"{val_correct_ratio[0]}{csv_sep} "
+			f"{val_correct_ratio[1]}{csv_sep} "
+			f"{val_correct_ratio[2]}{csv_sep} "
+			f"{val_correct_ratio[3]}{csv_sep} "
+			f"{val_correct_ratio[4]}\n"
+		)
 	write_log_file(os.path.join(path_dir_log_file, "log_correctness_ratio.csv"), log_correctness_ratio_string)
 
 	return (total_process_time, S_values[-1])
