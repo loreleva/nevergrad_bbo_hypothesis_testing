@@ -385,6 +385,8 @@ def main(argv):
 	if function_json["dimension"] == "d":
 		if type(function_json["minimum_f"]) == dict and list(function_json["minimum_f"].keys())[0] == "dimension":
 			dimensions = [int(x) for x in function_json["minimum_f"]["dimension"].keys()]
+		elif function_name == "perm_function_0,_d,_B":
+			dimensions = [2] + [10**(x+1) for x in range(1)]
 		else:
 			dimensions = [2] + [10**(x+1) for x in range(2)]
 	else:
