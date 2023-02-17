@@ -22,7 +22,7 @@ class objective_function():
 		self.name = name
 		json_functions = load_json()
 		if not self.name in json_functions.keys():
-			raise sfuFunctionError("The function selected does not exists")
+			raise sfuFunctionError("The function selected does not exist")
 		json_func = json_functions[self.name]
 		
 		# Assign dimension

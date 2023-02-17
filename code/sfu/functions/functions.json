@@ -263,8 +263,13 @@
         "filepath_m": "functions_no_parameters/schaffer_function_n._4.m"
     },
     "schwefel_function": {
-        "dimension": "d",
-        "minimum_x": 420.9687,
+        "dimension": "2",
+        "minimum_x": [
+            [
+                420.968746,
+                420.968746
+            ]
+        ],
         "minimum_f": 0,
         "parameters": null,
         "input_domain": [
@@ -590,16 +595,14 @@
         "dimension": "d",
         "minimum_x": "if d==2:\n\tminimum_x = [2.20, 1.57]\nelse:\n\tminimum_x = None",
         "minimum_f": {"dimension" : {"2" : -1.8013, "5" : -4.687658, "10" : -9.66015}},
-        "parameters": "double m (default = 10)",
-        "default_parameters" : {"m" : 10},
-        "parameters_names" : ["m"],
+        "parameters": null,
         "input_domain": [
             [
                 "input_domain = (0, math.pi)"
             ]
         ],
-        "filepath_r": "functions_parameters/michalewicz_function.R",
-        "filepath_m": "functions_parameters/michalewicz_function.m"
+        "filepath_r": "functions_no_parameters/michalewicz_function.R",
+        "filepath_m": "functions_no_parameters/michalewicz_function.m"
     },
     "beale_function": {
         "dimension": "2",

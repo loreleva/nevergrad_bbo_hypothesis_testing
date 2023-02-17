@@ -1,4 +1,4 @@
-import sys, time
+import sys, time, math
 from functions import *
 
 function_obj = None
@@ -27,8 +27,10 @@ def get_dist(algo_input):
 if __name__ == "__main__":
 	#print(f"Result search: {search_function({'minimum_f' : True})}")
 	#print("Functions with dimension d:{}\n".format(search_function({"dimension" : "d"})))
-	function_selected = "branin_function"
-	function_obj = objective_function(function_selected)
-	print(get_dist([8.14159,2.275]))
+	function_selected = "shekel_function"
+	dim = 4
+	#print(f"Optimum: {- dim * (dim + 4)*(dim-1)/6}")
+	function_obj = objective_function(function_selected, dim=dim, param={"m":10})
+	print(function_obj.evaluate([4]*dim))
 	
 	
