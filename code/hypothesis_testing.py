@@ -57,7 +57,6 @@ def stopping_criteria(samples):
 	return False
 
 
-
 def obtain_queries(optimizer):
 	global num_points
 	input_points = []
@@ -363,6 +362,36 @@ def hypothesis_testing(delta, epsilon, tolerance = 1e-6):
 
 	return (total_process_time, S_values[-1])
 
+def get_test_dimensions(dim, min_f):
+	"""Returns the list of dimension on which the function must be tested.
+
+	Parameters
+	----------
+	dim: str
+		json value for the field "dimension" of the functions' definition json. (e.g., "d", "2", etc...)
+	min_f: dict, float
+		json value for the field "minimum_f" of the functions' definition json. 
+		It is a dict when the function's global minimum is defined only for specific dimensions (e.g., dict = {"dimension" : {"2" : -1, "5" : 0}}).
+		Otherwise it is a float number.
+
+	Returns
+	-------
+	list
+		list of integers representing the dimensions on which the function must be tested
+	
+	"""
+	if dim == "d":
+		if type(min_f) == dict and list(min_f)[0] == "dimension":
+			dimensions = [int(x) for x in list(min_f["dimension"])]
+		else:
+			dimensions = [2] + [10**(x+1) for x in range(2)]
+	else:
+		dimensions = [int(dim)]
+	return dimensions
+
+def get_test_parameters()
+
+
 def main(argv):
 	# argv[0] : function name, argv[1] : # points to evaluate, argv[2] : # parallel processes
 	global num_proc, num_points, function_obj, range_stopping_criteria, path_dir_log_file
@@ -381,16 +410,11 @@ def main(argv):
 	if not os.path.exists(path_dir_res):
 		os.mkdir(path_dir_res)
 
-	# define the dimensions of the function to test
-	if function_json["dimension"] == "d":
-		if type(function_json["minimum_f"]) == dict and list(function_json["minimum_f"].keys())[0] == "dimension":
-			dimensions = [int(x) for x in function_json["minimum_f"]["dimension"].keys()]
-		elif function_name == "perm_function_0,_d,_B":
-			dimensions = [2] + [10**(x+1) for x in range(1)]
-		else:
-			dimensions = [2] + [10**(x+1) for x in range(2)]
-	else:
-		dimensions = [function_json["dimension"]]
+	# obtain the list of dimensions on which to test it
+	dimensions = get_test_dimensions(function_json["dimension"], function_json["minimum_f"])
+	print(dimensions)
+	return
+	
 
 	num_points = int(argv[1])
 	num_proc = int(argv[2])
@@ -405,9 +429,10 @@ def main(argv):
 		if not os.path.exists(path_dir_res_dim):
 			os.mkdir(path_dir_res_dim)
 
+		# create the function class' object
 		function_obj = ev.objective_function(function_name, dim=dim)
 
-		# if function accepts parameters
+		# if function accepts parameters create the list of parameters on which to test the function
 		if function_obj.parameters != None:
 			# dictionary with all the parameters values, for each parameter
 			comb_parameters = {}
