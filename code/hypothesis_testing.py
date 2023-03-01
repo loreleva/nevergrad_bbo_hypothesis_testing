@@ -39,7 +39,7 @@ def multiproc_function(q_inp, q_res, function_obj, num_points):
 
 def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_proc, q_inp, q_res, tolerance = 1e-6, correct_thr = 1e-6):
 	# init N
-	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
+	N = 5#math.ceil((math.log(delta)/math.log(1-epsilon)))
 
 	# track execution time of algorithm
 	start_time = time.time()
@@ -155,8 +155,12 @@ def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_pr
 	single_core_time = sum(processes_runs_time)
 	speedup = single_core_time/multi_core_time
 	efficiency = speedup/num_proc
+	mean_time_per_run = sum(processes_runs_time) / len(processes_runs_time)
+	std_dev_time_per_run = std_dev(processes_runs_time)
 	mean_number_of_asks = sum(number_of_asks)/len(number_of_asks)
+	std_dev_number_of_asks = std_dev(number_of_asks)
 	mean_ram_usage = sum(ram_usage)/len(ram_usage)
+	std_dev_ram_usage = std_dev(ram_usage)
 
 	log_result_string = (
 							f"Runs of nevergrad{csv_sep} "
@@ -170,9 +174,15 @@ def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_pr
 							f"Correctness ratio{csv_sep}"
 							f"Multi core execution time{csv_sep} "
 							f"Single core execution time{csv_sep} "
+							f"Mean time per run{csv_sep} "
+							f"Standard deviation time per run{csv_sep} "
+							f"Mean number of asks per run{csv_sep} "
+							f"Standard deviation number of asks per run{csv_sep} "
+							f"Max RAM Megabyte usage{csv_sep} "
+							f"Mean ram usage{csv_sep} "
+							f"Standard deviation ram usage{csv_sep} "
 							f"Speedup{csv_sep} "
-							f"Efficiency{csv_sep} "
-							f"Max RAM Megabyte usage\n"
+							f"Efficiency\n"
 						)
 	print(log_result_string)
 	temp_string = (
@@ -187,9 +197,15 @@ def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_pr
 					f"{num_correct_opts/num_run}{csv_sep} "
 					f"{time_to_str(multi_core_time)}{csv_sep} "
 					f"{time_to_str(single_core_time)}{csv_sep} "
+					f"{mean_time_per_run}{csv_sep} "
+					f"{std_dev_time_per_run}{csv_sep} "
+					f"{mean_number_of_asks}{csv_sep} "
+					f"{std_dev_number_of_asks}{csv_sep} "
+					f"{max_ram_usage}{csv_sep} "
+					f"{mean_ram_usage}{csv_sep} "
+					f"{std_dev_ram_usage}{csv_sep} "
 					f"{speedup}{csv_sep} "
-					f"{efficiency}{csv_sep} "
-					f"{max_ram_usage}\n"
+					f"{efficiency}\n"
 				)
 	print(temp_string)
 	log_result_string = log_result_string + temp_string
@@ -243,19 +259,23 @@ def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_pr
 	# plot
 	log_s_values_string = (
 							f"Run{csv_sep} "
-							f"S{csv_sep}\n"
+							f"S\n"
 		)
 	prev_s_value = None
 	for s_value in S_values:
 		if prev_s_value != None:
 			log_s_values_string = log_s_values_string + (
 															f"{s_value['run number']-1}{csv_sep} "
-															f"{prev_s_value}{csv_sep}\n"
+															f"{prev_s_value}\n"
 													)
 		log_s_values_string = log_s_values_string + (
 														f"{s_value['run number']}{csv_sep} "
 														f"{s_value['S value']}\n"
 												)
+	log_s_values_string = log_s_values_string + (
+													f"{N}{csv_sep} "
+													f"{s_value['S value']}\n"
+											)
 	write_log_file(os.path.join(path_dir_log_file, "log_s_values_plot.csv"), log_s_values_string)
 
 	# create list of errors
@@ -346,7 +366,7 @@ def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_pr
 
 	# write log for plot of execution times
 	exec_time_plot = compute_perc_values([run_info["time"] for run_info in runs_infos], decimal_precision=1)
-	log_time_plot_string = "Time{csv_sep} Percentage\n"
+	log_time_plot_string = f"Time{csv_sep} Percentage\n"
 	for plot_val in exec_time_plot:
 		log_time_plot_string = log_time_plot_string + f"{plot_val[0]}{csv_sep} {plot_val[1]}\n"
 	write_log_file(os.path.join(path_dir_log_file, "log_exec_time_plot.csv"), log_time_plot_string)
