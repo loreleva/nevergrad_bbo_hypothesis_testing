@@ -792,18 +792,16 @@
                 4
             ]
         ],
-        "minimum_f": {"m" : {"5" : -10.1532, "7" : -10.4029, "10" : -10.5364}},
-        "parameters": "integer m (default = 10)",
-        "default_parameters" : {"m" : 10},
-        "parameters_names" : ["m"],
+        "minimum_f": -10.5364,
+        "parameters": null,
         "input_domain": [
             [
                 0,
                 10
             ]
         ],
-        "filepath_r": "functions_parameters/shekel_function.R",
-        "filepath_m": "functions_parameters/shekel_function.m"
+        "filepath_r": "functions_no_parameters/shekel_function.R",
+        "filepath_m": "functions_no_parameters/shekel_function.m"
     },
     "styblinski-tang_function": {
         "dimension": "d",
