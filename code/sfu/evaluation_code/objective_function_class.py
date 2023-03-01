@@ -1,20 +1,39 @@
-import json, math, os
+import math, os, json
 from rpy2 import robjects
 from subprocess import check_output
 import shutil
 
-from error_classes import *
+class JsonNotLoaded(Exception):
+	pass
+
+class sfuFunctionError(Exception):
+	pass
 
 json_filepath = os.path.join(os.path.dirname(os.path.dirname(__file__)), "functions/") + "functions.json"
 
-
-def load_json():
+def get_json_functions():
+	"""
+	Returns the dictionary of all the functions inside the functions' json
+	"""
 	global json_filepath
 	f = open(json_filepath)
 	json_functions = json.load(f)
 	f.close()
 	return json_functions
 
+def get_json_function(name):
+	"""
+	Returns the dictionary of the selected function inside the functions' json
+	"""
+	global json_filepath
+	f = open(json_filepath)
+	json_functions = json.load(f)
+	f.close()
+	try:
+		res_json = json_functions[name]
+	except KeyError:
+		raise sfuFunctionError(f"The selected function does not exists: \"{name}\"")
+	return res_json
 
 def search_function(filters=None):
 	"""
@@ -31,7 +50,7 @@ def search_function(filters=None):
 		The list of function names which satisfy the filters.
 		If no filter is given in input, all the functions are returned.
 	"""
-	json_functions = load_json()
+	json_functions = get_json_functions()
 	results = []
 	for function in json_functions:
 		ok = 1
@@ -59,13 +78,13 @@ class objective_function():
 		Name of the objective function
 	dimension: int
 		Dimension of the objective function.
-	input_domain: bool
+	has_input_domain: bool
 		It is True when the range of the input domain is available.
 	input_lb: list
 		Each index of the list represents a dimension, a value at that index represents the lower bound of the range of that dimension.
 	input_ub: list
 		Each index of the list represents a dimension, a value at that index represents the upper bound of the range of that dimension.
-	minimum_x: int, float, list, None
+	input_opt: int, float, list, None
 		Function's input value of the global optimum. When the value is list of lists, it represents the multiple possible input values for the global optimum.
 	has_parameters: bool
 		It is True when the function accepts parameters.
@@ -75,9 +94,9 @@ class objective_function():
 		Dictionary of parameters' values of the objective function.
 	parameters_names: list
 		List of the parameters names.
-	minimum_f_param: str, None
-		Parameter name on which the global minimum depends.
-	minimum_f: float, None
+	param_opt: tuple, None
+		Tuple with parameter name at idx 0, and dict of values for which opt is defined at idx 1, if any.
+	opt: float, None
 		Function's global optimum.
 	R_code: str
 		Function's implementation in R.
@@ -87,8 +106,6 @@ class objective_function():
 	Functions
 	---------
 	evaluate(inp, param): evaluate the function on "inp" input values.
-
-
 	"""
 
 	def __init__(self, name, dim=None, param=None):
@@ -107,10 +124,10 @@ class objective_function():
 			If given in input, the keys of the dictionary are the parameters names.
 			If nothing is given in input, the function's parameters values will be setted to default ones, if any.
 		"""
+		# name of the objective function
 		self.name = name
-
 		# obtain function json dictionary
-		json_functions = load_json()
+		json_functions = get_json_functions()
 		if not self.name in json_functions:
 			raise sfuFunctionError("The function selected does not exist")
 		json_func = json_functions[self.name]
@@ -136,9 +153,9 @@ class objective_function():
 
 		# define input domain range
 		if json_func["input_domain"] == None:
-			self.input_domain = False
+			self.has_input_domain = False
 		else:
-			self.input_domain = True
+			self.has_input_domain = True
 			self.input_lb = []
 			self.input_ub = []
 			# if input domain is defined for each dimension
@@ -174,15 +191,15 @@ class objective_function():
 		if type(json_func["minimum_x"]) == str:
 			local_var = {"d" : self.dimension}
 			exec(json_func["minimum_x"], globals(), local_var)
-			self.minimum_x = local_var["minimum_x"]
+			self.input_opt = local_var["minimum_x"]
 		elif type(json_func["minimum_x"]) == int or type(json_func["minimum_x"]) == float:
-			self.minimum_x = [json_func["minimum_x"] for x in range(self.dimension)]
+			self.input_opt = [json_func["minimum_x"] for x in range(self.dimension)]
 		elif json_func["minimum_x"] == None:
-			self.minimum_x = None
+			self.input_opt = None
 		elif len(json_func["minimum_x"]) == 1:
-			self.minimum_x = json_func["minimum_x"][0]
+			self.input_opt = json_func["minimum_x"][0]
 		else:
-			self.minimum_x = json_func["minimum_x"]
+			self.input_opt = json_func["minimum_x"]
 
 		# define function's parameters
 		if json_func["parameters"] == None:
@@ -210,31 +227,35 @@ class objective_function():
 
 
 		# define function's global optimum
-		self.minimum_f_param = None
-		# if definition of global optimum is python code, evaluate it
+		self.param_opt = None
+		# if definition of optimum is python code, evaluate it
 		if type(json_func["minimum_f"]) == str:
 			local_var = {"d" : self.dimension}
 			exec(json_func["minimum_f"], globals(), local_var)
-			self.minimum_f = local_var["minimum_f"]
-		# if optimum depends on parameters/dimensions
+			self.opt = local_var["minimum_f"]
+		# if minimum_f is a dict, then the function's optimum is defined only for those parameter's values.
+		# The key of this dict is the parameter's name and its value is a dict with
+		# parameter values in str format as key, and the global optimum as value.
+		# e.g., {"m" : {"5": -10.1532, "7" : -10.4029}} will represents the fact that with m=5, the function's optimum is -10.1532 
 		elif type(json_func["minimum_f"]) == dict:
-			self.minimum_f_dict = json_func["minimum_f"]
-			self.minimum_f_param = list(self.minimum_f_dict.keys())[0]
-			self.minimum_f_param = (self.minimum_f_param, list(self.minimum_f_dict[self.minimum_f_param].keys()))
-
+			param_opt_dict = json_func["minimum_f"]
+			param_opt_name = list(param_opt_dict.keys())[0]
+			# overwrite the variable with the dict associated to the parameter
+			param_opt_dict = param_opt_dict[param_opt_name]
+			self.param_opt = (param_opt_name, param_opt_dict)
 			# if optimum depends on function dimension, select the optimum corresponding to the function's dimension
-			if self.minimum_f_param[0] == "dimension":
+			if self.param_opt[0] == "dimension":
 				# if optimum is not defined for the chosen function dimension
-				if str(self.dimension) not in list(self.minimum_f_dict[self.minimum_f_param[0]].keys()):
-					self.minimum_f = None
+				if str(self.dimension) not in self.param_opt[1]:
+					self.opt = None
 				else:
-					self.minimum_f = self.minimum_f_dict[self.minimum_f_param[0]][str(self.dimension)]
-			# if optimum depends on function parameter, select the optimum corresponding to such parameter value
+					self.opt = param_opt_dict[str(self.dimension)]
+			# if optimum depends on function's parameter, select the optimum corresponding to such parameter value
 			else:
-				self.minimum_f = self.minimum_f_dict[self.minimum_f_param[0]][str(self.parameters[self.minimum_f_param[0]])]
+				self.opt = self.param_opt[1][str(self.parameters[self.param_opt[0]])]
 		# optimum is a float value
 		else:
-			self.minimum_f = json_func["minimum_f"]	
+			self.opt = json_func["minimum_f"]	
 
 		# keep string of R implementation of the function
 		path_implementation = os.path.join(os.path.dirname(os.path.dirname(__file__)), "functions/") + json_func["filepath_r"]
@@ -242,6 +263,16 @@ class objective_function():
 			self.R_code = r.read()
 			self.implementation_name = self.R_code.split('\n')[0].split()[0]
 			r.close()
+
+	def set_parameters(self, parameters):
+		if not self.has_parameters:
+			raise sfuFunctionError("Function does not accept parameters")
+		for param in parameters:
+			self.parameters[param] = parameters[param]
+
+		# if changed parameter modify optimum, update it
+		if self.param_opt != None and self.param_opt[0] in list(parameters.keys()):
+			self.opt = self.param_opt[1][str(self.parameters[self.param_opt[0]])]
 
 	# evaluate the function on input values
 	def evaluate(self, inp):
@@ -255,7 +286,6 @@ class objective_function():
 		-------
 		float
 			Value of the function on input point "inp".
-
 		"""
 		# check if the input is valid
 		if self.dimension == 1 and type(inp) != int and type(inp) != float:
