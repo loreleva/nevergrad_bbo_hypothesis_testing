@@ -749,13 +749,3 @@ functions_by_name = {
 	"shekel_function" : shekel_function,
 	"styblinski-tang_function" : styblinski_tang_function
 }
-
-
-import time
-if __name__ == "__main__":
-	a = time.time()
-	fun = objective_function("styblinski-tang_function", dim=1000)
-	print(fun.evaluate(fun.input_opt))
-	print(fun.opt)
-	print(f"SECONDS NEEDED: {time.time() - a}")
-
