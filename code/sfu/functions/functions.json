@@ -283,8 +283,13 @@
     },
     "shubert_function": {
         "dimension": "2",
-        "minimum_x": null,
-        "minimum_f": -186.7309,
+        "minimum_x": [
+            [
+                -7.708309818,
+                -0.800371886
+            ]
+        ],
+        "minimum_f": -186.7309030956991,
         "parameters": null,
         "input_domain": [
             [
@@ -520,7 +525,7 @@
                 0.7126
             ]
         ],
-        "minimum_f": -1.0316,
+        "minimum_f": -1.0316284229280819,
         "parameters": null,
         "input_domain": [
             [
@@ -626,7 +631,7 @@
     "branin_function": {
         "dimension": "2",
         "minimum_x": "minimum_x = [ [-(math.pi),12.275], [math.pi,2.275], [9.42478,2.475] ]",
-        "minimum_f": 0.397887,
+        "minimum_f": 0.39788735772973816,
         "parameters": null,
         "input_domain":
         [
@@ -705,7 +710,7 @@
                 0.852547
             ]
         ],
-        "minimum_f": -3.86278,
+        "minimum_f": -3.8627797869493365,
         "parameters": null,
         "input_domain": [
             [
@@ -742,7 +747,7 @@
                 0.6573
             ]
         ],
-        "minimum_f": -3.32237,
+        "minimum_f": -3.322368011391339,
         "parameters": null,
         "input_domain": [
             [
@@ -792,7 +797,7 @@
                 4
             ]
         ],
-        "minimum_f": -10.5364,
+        "minimum_f": -10.536283726219603,
         "parameters": null,
         "input_domain": [
             [
