@@ -4,7 +4,7 @@ from utils import *
 
 def run_nevergrad(function_obj, range_stopping_criteria, num_points):
 	# define parameters for nevergrad optimizator
-	if function_obj.has_input_domain:
+	if function_obj.has_input_domain_range:
 		param = ng.p.Array(shape=(function_obj.dimension,), lower=function_obj.input_lb, upper=function_obj.input_ub)
 	else:
 		param = ng.p.Array(shape=(function_obj.dimension,))

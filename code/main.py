@@ -1,90 +1,112 @@
-import sys, os
+import sys, os, argparse
 from hypothesis_testing import *
 from multi_processes import *
-import sfu.evaluation_code.objective_function_class as obj_func
+import sfu.objective_function_class as obj_func
 
 
 def main(argv):
-		# argv[0] : function name, argv[1] : # points to evaluate, argv[2] : # parallel processes
-		global num_proc, num_points, function_obj, range_stopping_criteria, path_dir_log_file
-		# number of points to evaluate in parallel
-		num_points = int(argv[1])
-		# number of concurrent processes
-		num_proc = int(argv[2])
-		# number of last results on which compute stopping criteria
-		range_stopping_criteria = 20
-		# hypothesis testing parameters delta and epsilon
-		delta = 0.001
-		epsilon = 0.001
+	# argv[0] : function name, argv[1] : # points to evaluate, argv[2] : # parallel processes
+	global num_proc, num_points, function_obj, range_stopping_criteria, path_dir_log_file
+	
+	# define parser
+	parser = argparse.ArgumentParser(description="run hypothesis testing using Nevergrad")
+	parser.add_argument("function_name", help="objective function name")
+	parser.add_argument("points", type=int, help="number of points to be evaluated in parallel")
+	parser.add_argument("processes", type=int, help="number of processes that runs optimization in parallel")
+	parser.add_argument("--parameters", "-p", action="store_true", help="run the tests also for different values of the parameters")
+	parser.add_argument("--dimensions", "-d", type=int, nargs="+", help="explicitly define dimensions on which perform the tests")
+	parser.add_argument("--verbose", "-v", action="store_true")
+	args = parser.parse_args()
 
-		# create directory of the results logs
-		path_dir_res = os.path.join(os.path.dirname(__file__),"log_results")
-		if not os.path.exists(path_dir_res):
-			os.mkdir(path_dir_res)
+	# number of points to evaluate in parallel
+	num_points = args.points
+	# number of concurrent processes
+	num_proc = args.processes
+	# hypothesis testing parameters delta and epsilon
+	delta = 1e-3
+	epsilon = 1e-3
 
-		# init the module which compute the function and the infos about it
-		function_name = argv[0]
-		function_json = obj_func.get_json_function(function_name)
+	# create directory of the results logs
+	path_dir_res = os.path.join(os.path.dirname(__file__),"log_results")
+	if not os.path.exists(path_dir_res):
+		os.mkdir(path_dir_res)
 
-		# path of the function results
-		path_dir_res = os.path.join(path_dir_res, f"{function_name}")
-		if not os.path.exists(path_dir_res):
-			os.mkdir(path_dir_res)
+	# modify path of json of functions
+	obj_func.json_filepath = os.path.join("sfu", obj_func.json_filepath)
 
-		# obtain the list of dimensions on which to test it
+	# create the objective function object
+	function_name = args.function_name
+	function_json = obj_func.get_json_functions(name=function_name)
+
+	# path of the function results
+	path_dir_res = os.path.join(path_dir_res, f"{function_name}")
+	if not os.path.exists(path_dir_res):
+		os.mkdir(path_dir_res)
+
+	# if dimensions are specified on input, use those
+	if args.dimensions != None:
+		dimensions = args.dimensions
+	# otherwise obtain the list of dimensions on which to test it	
+	else:
 		dimensions = get_test_dimensions(function_json["dimension"], function_json["minimum_f"])
 		
-		# test the function with all the selected dimensions
-		for dim in dimensions:
-			# path of the results for the dimension dim
-			path_dir_res_dim = os.path.join(path_dir_res, f"dimension_{dim}")
-			if not os.path.exists(path_dir_res_dim):
-				os.mkdir(path_dir_res_dim)
+	# test the function on all the selected dimensions
+	for dim in dimensions:
 
-			# create object of the objective function class
-			function_obj = obj_func.objective_function(function_name, dim=dim)
+		# path of the results for the dimension dim
+		path_dir_res_dim = os.path.join(path_dir_res, f"dimension_{dim}")
+		if not os.path.exists(path_dir_res_dim):
+			os.mkdir(path_dir_res_dim)
 
-			# if function accepts parameters create the list of parameters on which to test the function
-			if function_obj.has_parameters == True:
-				# get dictionary of parameters with their values
-				comb_parameters = get_test_parameters(function_obj)
+		# create object of the objective function class
+		function_obj = obj_func.objective_function(function_name, dim=dim)
 
-				# for each possible combination of the parameters values
-				for param_values_list in itertools.product(*[comb_parameters[param_name] for param_name in function_obj.parameters_names]):
-					# obtain combination of parameters
-					i=0
-					temp_param_values = {}
-					for param_name in function_obj.parameters_names:
-						temp_param_values[param_name] = param_values_list[i]
-						i+=1
+		# if parameters testing is activated and function accepts parameters create the list of parameters on which to test the function
+		if args.parameters and function_obj.has_parameters == True:
+			# get dictionary of parameters with their values
+			comb_parameters = get_test_parameters(function_obj)
+
+			# for each possible combination of the parameters values
+			for param_values_list in itertools.product(*[comb_parameters[param_name] for param_name in function_obj.parameters_names]):
+				# obtain combination of parameters
+				i=0
+				temp_param_values = {}
+				for param_name in function_obj.parameters_names:
+					temp_param_values[param_name] = param_values_list[i]
+					i+=1
 					# update function's parameters values
-					function_obj.set_parameters(temp_param_values)
+				function_obj.set_parameters(temp_param_values)
 
+				if args.verbose:
 					print(f"TESTING FUNCTION DIM: {dim} PARAMETERS: {[ (param_name, str(temp_param_values[param_name])) for param_name in function_obj.parameters_names]} OPT_POINT: {function_obj.opt}\n")
 					
-					path_dir_log_file = os.path.join(path_dir_res_dim, f"function_{function_name}_dimension_{dim}_parameters_{[ (param_name, temp_param_values[param_name]) for param_name in function_obj.parameters_names ]}")
-					if not os.path.exists(path_dir_log_file):
-						os.mkdir(path_dir_log_file)
-
-					# create concurrent processes and run hypothesis testing
-					q_inp, q_res, processes = init_processes(num_proc, multiproc_function, function_obj, num_points)
-					hypo_testing_res = hypothesis_testing(function_obj.input_opt, function_obj.opt, delta, epsilon, path_dir_log_file, num_proc, q_inp, q_res)
-					kill_processes(processes)
-
-			# if function does not accept parameters
-			else:
-				print(f"TESTING FUNCTION DIM: {dim} OPT_POINT: {function_obj.opt}\n")
-				
-				path_dir_log_file = os.path.join(path_dir_res_dim, f"function_{function_name}_dimension_{dim}")
+				path_dir_log_file = os.path.join(path_dir_res_dim, f"function_{function_name}_dimension_{dim}_parameters_{[ (param_name, temp_param_values[param_name]) for param_name in function_obj.parameters_names ]}")
 				if not os.path.exists(path_dir_log_file):
 					os.mkdir(path_dir_log_file)
 
 				# create concurrent processes and run hypothesis testing
 				q_inp, q_res, processes = init_processes(num_proc, multiproc_function, function_obj, num_points)
-				hypo_testing_res = hypothesis_testing(function_obj.input_opt, function_obj.opt, delta, epsilon, path_dir_log_file, num_proc, q_inp, q_res)
+				# run hypothesis testing
+				hypothesis_testing(function_obj.input_opt, function_obj.opt, delta, epsilon, path_dir_log_file, num_proc, q_inp, q_res, verbose=args.verbose)
+				# kill concurrent processes
 				kill_processes(processes)
 
+		# if not parameters testing not activated or the function does not accept parameters
+		else:
 
+			if args.verbose:
+				print(f"TESTING FUNCTION DIM: {dim} OPT_POINT: {function_obj.opt}\n")
+				
+			path_dir_log_file = os.path.join(path_dir_res_dim, f"function_{function_name}_dimension_{dim}")
+			if not os.path.exists(path_dir_log_file):
+				os.mkdir(path_dir_log_file)
+
+			# create concurrent processes and obtain queues for input and output communication
+			q_inp, q_res, processes = init_processes(num_proc, multiproc_function, function_obj, num_points)
+			# run hypothesis testing
+			hypothesis_testing(function_obj.input_opt, function_obj.opt, delta, epsilon, path_dir_log_file, num_proc, q_inp, q_res, verbose=args.verbose)
+			# kill concurrent processes
+			kill_processes(processes)
 				
 
 def get_test_dimensions(dim, min_f):
@@ -106,10 +128,12 @@ def get_test_dimensions(dim, min_f):
 	
 	"""
 	if dim == "d":
+		# if global optimum is defined only for certain dimensions, select them
 		if type(min_f) == dict and list(min_f)[0] == "dimension":
 			dimensions = [int(x) for x in list(min_f["dimension"])]
+		# otherwise select samples from 2 to 100, with an interval of 10
 		else:
-			dimensions = [2] + [10**(x+1) for x in range(2)]
+			dimensions = [2] + [10*(x+1) for x in range(10)]
 	else:
 		dimensions = [int(dim)]
 	return dimensions

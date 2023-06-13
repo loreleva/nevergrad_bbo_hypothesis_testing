@@ -3,10 +3,12 @@
         "dimension": "d",
         "minimum_x": 0,
         "minimum_f": 0,
-        "parameters": "double a (default = 20)\ndouble b (default = 0.2)\ndouble c (default = 2*\\pi)",
-        "default_parameters" : {"a" : 20, "b" : 0.2, "c" : "c = 2 * math.pi"},
-        "parameters_names" : ["a", "b", "c"],
-        "input_domain": [
+        "parameters": {
+            "description": "double a (default = 20)\ndouble b (default = 0.2)\ndouble c (default = 2*\\pi)",
+            "default_parameters": {"a" : 20, "b" : 0.2, "c" : "c = 2 * math.pi"},
+            "parameters_names": ["a", "b", "c"]
+        },
+        "input_domain_range": [
             [ 
             -32.768,
             32.768
@@ -25,7 +27,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -15,
                 -5
@@ -60,7 +62,7 @@
         ],
         "minimum_f": -2.06261,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -10,
                 10
@@ -79,7 +81,7 @@
         ],
         "minimum_f": -1,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -5.12,
                 5.12
@@ -98,7 +100,7 @@
         ],
         "minimum_f": -959.6407,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -512,
                 512
@@ -112,7 +114,7 @@
         "minimum_x": null,
         "minimum_f": null,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 0.5,
                 2.5
@@ -126,7 +128,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -600,
                 600
@@ -157,7 +159,7 @@
         ],
         "minimum_f": -19.2085,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -10,
                 10
@@ -170,10 +172,12 @@
         "dimension": "d",
         "minimum_x": null,
         "minimum_f": null,
-        "parameters": "The default values are for d=2\ndouble m (default = 5)\nvector[m] c (default = [1,2,5,2,3])\nmatrix[m x d]  A (default = [\n [3,5],\n [5,2],\n [2,1],\n [1,4],\n [7,9]\n])",
-        "default_parameters" : {"m" : 5, "c" : [1,2,5,2,3], "A" : [[3,5], [5,2], [2,1], [1,4], [7,9]]},
-        "parameters_names" : ["m", "c", "A"],
-        "input_domain":[
+        "parameters": {
+            "description" : "The default values are for d=2\ndouble m (default = 5)\nvector[m] c (default = [1,2,5,2,3])\nmatrix[m x d]  A (default = [\n [3,5],\n [5,2],\n [2,1],\n [1,4],\n [7,9]\n])",
+            "default_parameters" : {"m" : 5, "c" : [1,2,5,2,3], "A" : [[3,5], [5,2], [2,1], [1,4], [7,9]]},
+            "parameters_names" : ["m", "c", "A"]
+        },
+        "input_domain_range":[
             [
                 0,
                 10
@@ -187,7 +191,7 @@
         "minimum_x": 1,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -10,
                 10
@@ -206,7 +210,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -10,
                 10
@@ -220,7 +224,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -5.12,
                 5.12
@@ -239,7 +243,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain":[
+        "input_domain_range":[
             [
                 -100,
                 100
@@ -253,7 +257,7 @@
         "minimum_x": null,
         "minimum_f": null,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -100,
                 100      
@@ -272,7 +276,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -500,
                 500
@@ -291,7 +295,7 @@
         ],
         "minimum_f": -186.7309030956991,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -10,
                 10
@@ -310,7 +314,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -100,
                 100
@@ -326,10 +330,10 @@
         "parameters" : "double b (default = 10)",
         "default_parameters" : {"b" : 10},
         "parameters_names" : ["b"],
-        "input_domain":
+        "input_domain_range":
         [
             [
-                "input_domain = (-d, d)"
+                "input_domain_range = (-d, d)"
             ]
         ],
         "filepath_r": "functions_parameters/perm_function_0,_d,_B.R",
@@ -340,7 +344,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -65.536,
                 65.536
@@ -354,7 +358,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                -5.12,
                5.12 
@@ -368,7 +372,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -1,
                 1
@@ -382,7 +386,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -10,
                 10
@@ -396,9 +400,9 @@
         "minimum_x": "minimum_x = []\nfor i in range(1,d+1):\n\tminimum_x.append(i*(d+1-i))",
         "minimum_f": "minimum_f = ((-d)*(d + 4)*(d - 1))/6",
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
-               "input_domain = (-(d**2), d**2)" 
+               "input_domain_range = (-(d**2), d**2)" 
             ]
         ],
         "filepath_r": "functions_no_parameters/trid_function.R",
@@ -414,7 +418,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -10,
                 10
@@ -433,7 +437,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -10,
                 10
@@ -452,7 +456,7 @@
         ],
         "minimum_f": -1.9133,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -1.5,
                 4
@@ -469,12 +473,14 @@
         "dimension": "d",
         "minimum_x": null,
         "minimum_f": null,
-        "parameters": "The default values are for d=4\nvector[d] b (default = [8, 18, 44, 114])",
-        "default_parameters" : {"b" : [8,18,44, 114]},
-        "parameters_names" : ["b"],
-        "input_domain": [
+        "parameters": {
+            "description": "The default values are for d=4\nvector[d] b (default = [8, 18, 44, 114])",
+            "default_parameters": {"b" : [8,18,44, 114]},
+            "parameters_names": ["b"]
+        },
+        "input_domain_range": [
             [
-                "input_domain = (0, d)"
+                "input_domain_range = (0, d)"
             ]
         ],
         "filepath_r": "functions_parameters/power_sum_function.R",
@@ -485,7 +491,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -5,
                 10
@@ -504,7 +510,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -5,
                 5
@@ -527,7 +533,7 @@
         ],
         "minimum_f": -1.0316284229280819,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -3,
                 3
@@ -545,7 +551,7 @@
         "minimum_x": "minimum_x = [2**( (-(2**i - 2)) / (2**i) ) for i in range(1,d+1)]",
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -10,
                 10
@@ -559,7 +565,7 @@
         "minimum_x": 1,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -5,
                 10
@@ -573,7 +579,7 @@
         "minimum_x": null,
         "minimum_f": null,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -65.536,
                 65.536
@@ -587,7 +593,7 @@
         "minimum_x": "minimum_x = [math.pi, math.pi]",
         "minimum_f": -1,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -100,
                 100
@@ -601,9 +607,9 @@
         "minimum_x": "if d==2:\n\tminimum_x = [2.20, 1.57]\nelse:\n\tminimum_x = None",
         "minimum_f": {"dimension" : {"2" : -1.8013, "5" : -4.687658, "10" : -9.66015}},
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
-                "input_domain = (0, math.pi)"
+                "input_domain_range = (0, math.pi)"
             ]
         ],
         "filepath_r": "functions_no_parameters/michalewicz_function.R",
@@ -619,7 +625,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -4.5,
                 4.5
@@ -633,7 +639,7 @@
         "minimum_x": "minimum_x = [ [-(math.pi),12.275], [math.pi,2.275], [9.42478,2.475] ]",
         "minimum_f": 0.39788735772973816,
         "parameters": null,
-        "input_domain":
+        "input_domain_range":
         [
             [
                 -5,
@@ -659,7 +665,7 @@
         ],
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -10,
                 10
@@ -673,7 +679,7 @@
         "minimum_x": null,
         "minimum_f": null,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 0,
                 1
@@ -692,7 +698,7 @@
         ],
         "minimum_f": 3,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -2,
                 2
@@ -712,7 +718,7 @@
         ],
         "minimum_f": -3.8627797869493365,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 0,
                 1
@@ -726,7 +732,7 @@
         "minimum_x": null,
         "minimum_f": null,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 0,
                 1
@@ -749,7 +755,7 @@
         ],
         "minimum_f": -3.322368011391339,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                0,
                1 
@@ -762,12 +768,14 @@
         "dimension": "d",
         "minimum_x": "minimum_x = [ x for x in range(1,d+1) ]",
         "minimum_f": 0,
-        "parameters": "double b (default = 0.5)",
-        "default_parameters" : {"b" : 0.5},
-        "parameters_names" : ["b"],
-        "input_domain": [
+        "parameters": {
+            "description": "double b (default = 0.5)",
+            "default_parameters": {"b" : 0.5},
+            "parameters_names": ["b"]
+        },
+        "input_domain_range": [
             [
-                "input_domain = (-d, d)"
+                "input_domain_range = (-d, d)"
             ]
         ],
         "filepath_r": "functions_parameters/perm_function_d,_B.R",
@@ -778,7 +786,7 @@
         "minimum_x": 0,
         "minimum_f": 0,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -4,
                 5
@@ -799,7 +807,7 @@
         ],
         "minimum_f": -10.536283726219603,
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 0,
                 10
@@ -813,7 +821,7 @@
         "minimum_x": -2.903534,
         "minimum_f": "minimum_f = -(39.16599*d)",
         "parameters": null,
-        "input_domain": [
+        "input_domain_range": [
             [
                 -5,
                 5
