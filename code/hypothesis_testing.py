@@ -44,7 +44,7 @@ def multiproc_function(q_inp, q_res, function_obj, num_points):
 
 def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_proc, q_inp, q_res, tolerance = 1e-6, correct_thr = 1e-6, verbose=False):
 	# init N
-	N = 3#math.ceil((math.log(delta)/math.log(1-epsilon)))
+	N = math.ceil((math.log(delta)/math.log(1-epsilon)))
 
 	# track execution time of algorithm
 	start_time = time.time()
