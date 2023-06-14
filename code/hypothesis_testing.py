@@ -184,8 +184,7 @@ def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_pr
 	log.write_s_values_plot_log(
 			path_dir_log_file,
 			S_values,
-			num_run,
-			N
+			num_run
 		)
 
 

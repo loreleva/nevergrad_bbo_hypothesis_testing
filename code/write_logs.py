@@ -292,7 +292,7 @@ def write_s_values_log(filepath, s_values, opt, input_opt, N, verbose):
 		f.close()
 
 
-def write_s_values_plot_log(filepath, s_values, num_run, N):
+def write_s_values_plot_log(filepath, s_values, num_run):
 	filepath_log = os.path.join(filepath, "log_s_values_plot.csv")
 
 	log_str = ""
@@ -310,10 +310,10 @@ def write_s_values_plot_log(filepath, s_values, num_run, N):
 				f"{s_value['S value']}\n"
 			)
 
-	# write last result until index N
-	if s_value['run number'] != N:
+	# write last result until index num_run
+	if s_value['run number'] != num_run:
 		log_str += (
-				f"{N}{csv_sep} "
+				f"{num_run}{csv_sep} "
 				f"{s_value['S value']}\n"
 			)
 
