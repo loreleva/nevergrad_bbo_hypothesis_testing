@@ -143,9 +143,8 @@ def hypothesis_testing(input_opt, opt, delta, epsilon, path_dir_log_file, num_pr
 
 		num_external_iterations += 1
 
-		# before restarting the N runs, check that the size of the queue is N
-		q_sizes = q_inp.qsize() + q_res.qsize()
-		for x in range(N - q_sizes):
+		# before restarting the N runs, add a number of requests in order to execute N runs
+		for _ in range(internal_iter):
 			q_inp.put(1)
 
 	# WRITE LOGS OF THE RESULTS
