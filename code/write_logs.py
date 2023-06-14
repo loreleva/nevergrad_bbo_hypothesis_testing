@@ -596,7 +596,8 @@ def find_crs_thresholds(errors):
 	N = len(errors)
 	ratios = [0.25, 0.50, 0.75, 1.0]
 	# threshold for correctness of 0 is min error - 1e-6
-	res = {0.0 : errors[0] - 1e-6}
+	min_thr = errors[0] - 1e-6
+	res = {0.0 : min_thr if min_thr >= 0 else 0}
 	i = 0
 	idx_errors = 0
 	n_corrects = 1
