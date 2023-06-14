@@ -17,7 +17,7 @@
         "filepath_r": "functions_parameters/ackley_function.R",
         "filepath_m": "functions_parameters/ackley_function.m"
     },
-    "bukin_function_n._6": {
+    "bukin_function_n_6": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -40,7 +40,7 @@
         "filepath_r": "functions_no_parameters/bukin_function_n._6.R",
         "filepath_m": "functions_no_parameters/bukin_function_n._6.m"
     },
-    "cross-in-tray_function": {
+    "cross_in_tray_function": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -71,7 +71,7 @@
         "filepath_r": "functions_no_parameters/cross-in-tray_function.R",
         "filepath_m": "functions_no_parameters/cross-in-tray_function.m"
     },
-    "drop-wave_function": {
+    "drop_wave_function": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -109,7 +109,7 @@
         "filepath_r": "functions_no_parameters/eggholder_function.R",
         "filepath_m": "functions_no_parameters/eggholder_function.m"
     },
-    "gramacy_&_lee_(2012)_function": {
+    "gramacy_lee_2012_function": {
         "dimension": "1",
         "minimum_x": null,
         "minimum_f": null,
@@ -200,7 +200,7 @@
         "filepath_r": "functions_no_parameters/levy_function.R",
         "filepath_m": "functions_no_parameters/levy_function.m"
     },
-    "levy_function_n._13": {
+    "levy_function_n_13": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -233,7 +233,7 @@
         "filepath_r": "functions_no_parameters/rastrigin_function.R",
         "filepath_m": "functions_no_parameters/rastrigin_function.m"
     },
-    "schaffer_function_n._2": {
+    "schaffer_function_n_2": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -252,7 +252,7 @@
         "filepath_r": "functions_no_parameters/schaffer_function_n._2.R",
         "filepath_m": "functions_no_parameters/schaffer_function_n._2.m"
     },
-    "schaffer_function_n._4": {
+    "schaffer_function_n_4": {
         "dimension": "2",
         "minimum_x": null,
         "minimum_f": null,
@@ -323,7 +323,7 @@
         "filepath_r": "functions_no_parameters/bohachevsky_functions.R",
         "filepath_m": "functions_no_parameters/bohachevsky_functions.m"
     },
-    "perm_function_0,_d,_B": {
+    "perm_function_o_d_b": {
         "dimension": "d",
         "minimum_x": "minimum_x = [1/(x+1) for x in range(d)]",
         "minimum_f": 0,
@@ -339,7 +339,7 @@
         "filepath_r": "functions_parameters/perm_function_0,_d,_B.R",
         "filepath_m": "functions_parameters/perm_function_0,_d,_B.m"
     },
-    "rotated_hyper-ellipsoid_function": {
+    "rotated_hyper_ellipsoid_function": {
         "dimension": "d",
         "minimum_x": 0,
         "minimum_f": 0,
@@ -500,7 +500,7 @@
         "filepath_r": "functions_no_parameters/zakharov_function.R",
         "filepath_m": "functions_no_parameters/zakharov_function.m"
     },
-    "three-hump_camel_function": {
+    "three_hump_camel_function": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -519,7 +519,7 @@
         "filepath_r": "functions_no_parameters/three-hump_camel_function.R",
         "filepath_m": "functions_no_parameters/three-hump_camel_function.m"
     },
-    "six-hump_camel_function": {
+    "six_hump_camel_function(": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -546,7 +546,7 @@
         "filepath_r": "functions_no_parameters/six-hump_camel_function.R",
         "filepath_m": "functions_no_parameters/six-hump_camel_function.m"
     },
-    "dixon-price_function": {
+    "dixon_price_function": {
         "dimension": "d",
         "minimum_x": "minimum_x = [2**( (-(2**i - 2)) / (2**i) ) for i in range(1,d+1)]",
         "minimum_f": 0,
@@ -574,7 +574,7 @@
         "filepath_r": "functions_no_parameters/rosenbrock_function.R",
         "filepath_m": "functions_no_parameters/rosenbrock_function.m"
     },
-    "de_jong_function_n._5": {
+    "de_jong_function_n_5": {
         "dimension": "2",
         "minimum_x": null,
         "minimum_f": null,
@@ -674,7 +674,7 @@
         "filepath_r": "functions_no_parameters/colville_function.R",
         "filepath_m": "functions_no_parameters/colville_function.m"
     },
-    "forrester_et_al._(2008)_function": {
+    "forrester_et_al_2008_function": {
         "dimension": "1",
         "minimum_x": null,
         "minimum_f": null,
@@ -688,7 +688,7 @@
         "filepath_r": "functions_no_parameters/forrester_et_al._(2008)_function.R",
         "filepath_m": "functions_no_parameters/forrester_et_al._(2008)_function.m"
     },
-    "goldstein-price_function": {
+    "goldstein_price_function": {
         "dimension": "2",
         "minimum_x": [
             [
@@ -707,7 +707,7 @@
         "filepath_r": "functions_no_parameters/goldstein-price_function.R",
         "filepath_m": "functions_no_parameters/goldstein-price_function.m"
     },
-    "hartmann_3-d_function": {
+    "hartmann_3_d_function": {
         "dimension": "3",
         "minimum_x": [
             [
@@ -727,7 +727,7 @@
         "filepath_r": "functions_no_parameters/hartmann_3-d_function.R",
         "filepath_m": "functions_no_parameters/hartmann_3-d_function.m"
     },
-    "hartmann_4-d_function": {
+    "hartmann_4_d_function": {
         "dimension": "4",
         "minimum_x": null,
         "minimum_f": null,
@@ -741,7 +741,7 @@
         "filepath_r": "functions_no_parameters/hartmann_4-d_function.R",
         "filepath_m": "functions_no_parameters/hartmann_4-d_function.m"
     },
-    "hartmann_6-d_function": {
+    "hartmann_6_d_function": {
         "dimension": "6",
         "minimum_x": [
             [
@@ -764,7 +764,7 @@
         "filepath_r": "functions_no_parameters/hartmann_6-d_function.R",
         "filepath_m": "functions_no_parameters/hartmann_6-d_function.m"
     },
-    "perm_function_d,_B": {
+    "perm_function_d_b": {
         "dimension": "d",
         "minimum_x": "minimum_x = [ x for x in range(1,d+1) ]",
         "minimum_f": 0,
@@ -816,7 +816,7 @@
         "filepath_r": "functions_no_parameters/shekel_function.R",
         "filepath_m": "functions_no_parameters/shekel_function.m"
     },
-    "styblinski-tang_function": {
+    "styblinski_tang_function": {
         "dimension": "d",
         "minimum_x": -2.903534,
         "minimum_f": "minimum_f = -(39.16599*d)",
