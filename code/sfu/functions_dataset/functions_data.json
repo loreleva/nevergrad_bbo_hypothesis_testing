@@ -519,7 +519,7 @@
         "filepath_r": "functions_no_parameters/three-hump_camel_function.R",
         "filepath_m": "functions_no_parameters/three-hump_camel_function.m"
     },
-    "six_hump_camel_function(": {
+    "six_hump_camel_function": {
         "dimension": "2",
         "minimum_x": [
             [
