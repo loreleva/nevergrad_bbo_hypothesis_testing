@@ -31,10 +31,10 @@ def multiproc_function(q_inp, q_res, function_obj, num_points):
 	while (inp != None):
 		# init time and ram tracking variables
 		start_time = time.process_time()
-		mem_usage = memory_usage(-1, max_usage=True)
 		# run nevergrad and obtain dictionary with the results
 		res = ng_util.run_nevergrad(function_obj, range_stopping_criteria=20, num_points=num_points)
 		# update results dictionary with time and ram usage
+		mem_usage = memory_usage(-1, max_usage=True)
 		res.update({"process time" : time.process_time() - start_time, "max ram usage" : mem_usage})
 		# push results into queue
 		q_res.put(res)
